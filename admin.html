@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <!-- ========================================================
+       META & TITLE
+  ========================================================= -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>Kelola Konten — Wahdah Islamic Travel</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome via CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind custom config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#FAF8F2',
+            emerald: {
+              950: '#08291F', 900: '#0B3D2E', 800: '#0E4F3B',
+              700: '#116447', 600: '#157A56', 500: '#1A9268',
+            },
+            gold: { 300: '#EAD48C', 400: '#DDBA55', 500: '#C9A227', 600: '#A9841D' },
+          },
+          fontFamily: {
+            display: ['"Reem Kufi"', 'sans-serif'],
+            body: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- ========================================================
+       CUSTOM STYLE
+  ========================================================= -->
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FAF8F2; }
+    .font-display { font-family: 'Reem Kufi', sans-serif; }
+
+    @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    @keyframes toast-out { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, 12px); } }
+    .toast-enter { animation: toast-in 0.25s ease-out forwards; }
+    .toast-exit { animation: toast-out 0.25s ease-in forwards; }
+
+    .img-skeleton { background: linear-gradient(100deg, #EFEAE0 30%, #F8F5EC 50%, #EFEAE0 70%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { 0% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+
+    .field-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(17, 100, 71, 0.18); border-color: #116447; }
+
+    @keyframes modal-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+    .modal-in { animation: modal-in 0.18s ease-out forwards; }
+
+    /* --- Preview flyer (lightbox) --- */
+    .flyer-clickable { cursor: zoom-in; }
+    #lightboxModal { animation: modal-in 0.15s ease-out forwards; }
+    #lightboxImgWrap {
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #DDBA55 transparent;
+    }
+    #lightboxImgWrap::-webkit-scrollbar { width: 8px; height: 8px; }
+    #lightboxImgWrap::-webkit-scrollbar-thumb { background-color: #DDBA55; border-radius: 999px; }
+    #lightboxImg {
+      transition: transform 0.2s ease;
+      cursor: zoom-in;
+      touch-action: pinch-zoom;
+    }
+    #lightboxImg.zoomed { cursor: zoom-out; }
+    #lightboxVideoFrame {
+      width: min(92vw, 900px);
+      height: min(70vh, 506px);
+      background: #000;
+    }
+    #lightboxVideoWrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    #lightboxVideoFallback {
+      width: min(92vw, 900px);
+    }
+
+    #posImageWrap { touch-action: none; }
+    #posCanvas { touch-action: none; }
+
+    .custom-dropdown { position: relative; }
+    .custom-dropdown > select { display: none !important; }
+    .custom-dropdown-trigger { cursor: pointer; }
+    .custom-dropdown-list {
+      max-height: 14rem;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+
+<body class="bg-cream text-emerald-950 antialiased">
+
+  <!-- ========================================================
+       HEADER
+  ========================================================= -->
+  <header class="bg-emerald-900 text-cream">
+    <div class="max-w-5xl mx-auto px-5 pt-8 pb-6 sm:px-8">
+      <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 shrink-0 rounded-full bg-emerald-800 border-2 border-gold-500 flex items-center justify-center overflow-hidden">
+            <img
+              id="logoImg"
+              src="https://drive.google.com/thumbnail?id=10b9HsU9mVgsoVirI2bzzX1jlJhkaj6GZ&sz=w100"
+              alt="Logo Wahdah Islamic Travel"
+              class="w-full h-full object-cover"
+              data-fallback-stage="0"
+            />
+          </div>
+          <div>
+            <h1 class="font-display text-2xl sm:text-3xl tracking-wide text-white leading-none">Kelola Konten</h1>
+            <p class="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-gold-400 mt-1">Wahdah Islamic Travel — Panel Admin</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <span id="adminLoggedInAs" class="hidden text-xs sm:text-sm bg-emerald-800/60 border border-gold-500/30 text-gold-200 font-medium px-3 py-2 rounded-full">
+            <i class="fa-solid fa-circle-user mr-1"></i><span id="adminLoggedInAsName"></span>
+          </span>
+          <a
+            href="index.html"
+            class="inline-flex items-center gap-2 bg-emerald-800/80 hover:bg-emerald-800 border border-gold-500/40 text-gold-300 text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition-colors duration-200"
+          >
+            <i class="fa-solid fa-images"></i>
+            <span class="hidden sm:inline">Lihat Galeri</span>
+          </a>
+        </div>
+      </div>
+      <p class="mt-4 text-emerald-100/90 text-sm sm:text-base max-w-xl leading-relaxed">
+        Tambah, ubah, hapus, dan atur urutan flyer paket, flyer konten, serta video —
+        termasuk mengatur posisi nomor HP pada flyer dan menandai item sebagai Sold Out.
+      </p>
+    </div>
+
+    <div class="w-full leading-none" aria-hidden="true">
+      <svg width="100%" height="26" preserveAspectRatio="none" role="presentation">
+        <defs>
+          <pattern id="minimalDiamondPattern" width="96" height="26" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="13" x2="96" y2="13" stroke="#C9A227" stroke-width="1" stroke-opacity="0.55" />
+            <rect x="44" y="9" width="8" height="8" fill="#0B3D2E" stroke="#C9A227" stroke-width="1.25" transform="rotate(45 48 13)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="26" fill="url(#minimalDiamondPattern)" />
+      </svg>
+    </div>
+  </header>
+
+  <!-- ========================================================
+       MAIN CONTENT — PANEL ADMIN
+  ========================================================= -->
+  <main class="max-w-5xl mx-auto px-5 sm:px-8 py-8">
+    <section id="adminView" class="hidden">
+      <!-- FORM TAMBAH PAKET -->
+      <form id="promoForm" class="bg-white border border-emerald-900/10 rounded-2xl p-5 sm:p-6 shadow-sm mb-8" novalidate>
+        <h3 class="font-semibold text-emerald-900 mb-4">Tambah Paket / Video Baru</h3>
+
+        <ul id="formErrors" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-3 list-disc list-inside space-y-0.5"></ul>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label for="inputNamaPaket" class="block text-sm font-medium text-emerald-900 mb-1">Nama Paket / Judul Video</label>
+            <input
+              type="text" id="inputNamaPaket" placeholder="Contoh: Umrah Plus Dubai 11 Hari"
+              class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm transition-shadow duration-150"
+            />
+          </div>
+
+          <div>
+            <label for="inputTabType" class="block text-sm font-medium text-emerald-900 mb-1">Tampilkan di Tab</label>
+            <select id="inputTabType" class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm bg-white transition-shadow duration-150">
+              <option value="paket" selected>Flyer Paket</option>
+              <option value="promosi">Flyer Konten</option>
+              <option value="video">Video Konten</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inputKategori" class="block text-sm font-medium text-emerald-900 mb-1">Kategori</label>
+            <select id="inputKategori" class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm bg-white transition-shadow duration-150">
+              <option value="">Pilih kategori...</option>
+              <option value="Reguler">Reguler</option>
+              <option value="Plus Turki">Plus Turki</option>
+              <option value="Plus Dubai">Plus Dubai</option>
+              <option value="Plus Al-Aqsa">Plus Al-Aqsa</option>
+              <option value="Ramadhan">Ramadhan</option>
+              <option value="Akbar">Akbar</option>
+              <option value="VIP / Eksekutif">VIP / Eksekutif</option>
+              <option value="Lainnya">Lainnya...</option>
+            </select>
+            <div id="kategoriLainnyaWrap" class="hidden mt-2">
+              <input
+                type="text" id="inputKategoriLainnya" placeholder="Tulis nama kategori"
+                class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm transition-shadow duration-150"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label id="inputFlyerFileLabel" for="inputFlyerFile" class="block text-sm font-medium text-emerald-900 mb-1">Upload Flyer (JPG/PNG)</label>
+            <input
+              type="file" id="inputFlyerFile" accept="image/jpeg,image/png"
+              class="field-input w-full border border-emerald-900/20 rounded-xl px-3 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-emerald-800 file:text-white file:text-xs file:font-semibold hover:file:bg-emerald-900 transition-shadow duration-150"
+            />
+            <p id="inputFlyerHint" class="text-[11px] text-emerald-700/60 mt-1">Format JPG/PNG, ukuran maksimal 10MB (mendukung flyer resolusi HD). Posisi nomor HP bisa diatur setelah paket disimpan, lewat tombol "Atur Posisi No. HP" pada daftar di bawah.</p>
+            <div id="flyerPreview" class="hidden mt-2 w-24 h-32 rounded-xl overflow-hidden border border-emerald-900/10"></div>
+          </div>
+
+          <div class="sm:col-span-2">
+            <label for="inputCaption" class="block text-sm font-medium text-emerald-900 mb-1">Caption untuk Marketing</label>
+            <textarea
+              id="inputCaption" rows="6" placeholder="Tulis caption promosi lengkap dengan emoji, harga, dan fasilitas..."
+              class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed transition-shadow duration-150"
+            ></textarea>
+          </div>
+        </div>
+
+        <button
+          type="submit" id="btnSubmitPaket"
+          class="mt-5 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gold-500 hover:bg-gold-600 text-emerald-950 text-sm font-bold px-5 py-2.5 rounded-xl transition-colors duration-200 active:scale-[0.98]"
+        >
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Simpan &amp; Publikasikan</span>
+        </button>
+      </form>
+
+      <!-- DAFTAR PAKET TERSIMPAN -->
+      <div>
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h3 class="font-semibold text-emerald-900">Paket &amp; Video Tersimpan</h3>
+          <div class="flex items-center gap-1 bg-emerald-900/5 border border-emerald-900/10 rounded-full p-1">
+            <button type="button" id="adminFilterAll" class="admin-tab-filter-btn text-xs font-semibold px-3 py-1.5 rounded-full transition-colors" data-value="__all__">Semua</button>
+            <button type="button" id="adminFilterPromosi" class="admin-tab-filter-btn text-xs font-semibold px-3 py-1.5 rounded-full transition-colors" data-value="promosi">Konten</button>
+            <button type="button" id="adminFilterPaket" class="admin-tab-filter-btn text-xs font-semibold px-3 py-1.5 rounded-full transition-colors" data-value="paket">Paket</button>
+            <button type="button" id="adminFilterVideo" class="admin-tab-filter-btn text-xs font-semibold px-3 py-1.5 rounded-full transition-colors" data-value="video">Video</button>
+          </div>
+        </div>
+        <div id="adminListSpinner" class="py-16 text-center text-emerald-700/60">
+          <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+          <p class="text-sm">Memuat data...</p>
+        </div>
+        <div id="adminList" class="space-y-2.5"></div>
+        <div id="adminListEmpty" class="hidden text-center py-10 text-emerald-700/60 text-sm">
+          Belum ada paket/video yang tersimpan.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-emerald-950 text-emerald-100/80 mt-10">
+    <div class="max-w-5xl mx-auto px-5 sm:px-8 py-7 flex items-center justify-center text-xs sm:text-sm">
+      <p>&copy; <span id="currentYear"></span> Wahdah Islamic Travel. Panel internal — jangan bagikan tautan ini ke luar tim.</p>
+    </div>
+  </footer>
+
+  <!-- ========================================================
+       MODAL: LOGIN ADMIN (USER ID + PIN)
+  ========================================================= -->
+  <div id="pinModal" class="hidden fixed inset-0 z-[60] bg-emerald-950/60 backdrop-blur-sm flex items-center justify-center px-5">
+    <div class="modal-in bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+      <div class="flex items-center gap-2 mb-1">
+        <i class="fa-solid fa-lock text-gold-600"></i>
+        <h3 class="font-display text-lg text-emerald-900">Akses Admin</h3>
+      </div>
+      <p class="text-sm text-emerald-700/70 mb-4">Masukkan User ID &amp; PIN Admin untuk membuka panel kelola konten.</p>
+
+      <form id="pinForm">
+        <label for="pinUserIdInput" class="block text-xs font-medium text-emerald-900 mb-1">User ID</label>
+        <input
+          type="text" id="pinUserIdInput" placeholder="Masukkan User ID..." autocomplete="username"
+          class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm mb-3 transition-shadow duration-150"
+        />
+
+        <label for="pinInput" class="block text-xs font-medium text-emerald-900 mb-1">PIN</label>
+        <input
+          type="password" id="pinInput" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;" inputmode="numeric" autocomplete="current-password"
+          class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm mb-2 transition-shadow duration-150"
+        />
+        <p id="pinError" class="hidden text-xs text-red-600 mb-2"></p>
+
+        <div class="flex gap-2 mt-4">
+          <a href="index.html" id="pinCancelBtn" class="flex-1 border border-emerald-900/20 text-emerald-900 text-sm font-semibold rounded-xl py-2.5 hover:bg-emerald-900/5 transition-colors text-center">Batal</a>
+          <button type="submit" id="pinSubmitBtn" class="flex-1 bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-semibold rounded-xl py-2.5 transition-colors">Masuk</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: EDIT PAKET / VIDEO
+  ========================================================= -->
+  <div id="editModal" class="hidden fixed inset-0 z-[65] bg-emerald-950/60 backdrop-blur-sm flex items-center justify-center px-5 py-8 overflow-y-auto">
+    <div class="modal-in bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 my-auto">
+      <div class="flex items-center gap-2 mb-1">
+        <i class="fa-solid fa-pen text-gold-600"></i>
+        <h3 class="font-display text-lg text-emerald-900">Edit Paket / Video</h3>
+      </div>
+      <p class="text-sm text-emerald-700/70 mb-4">Perbarui detail item ini. Kosongkan unggahan file bila flyer/video tidak ingin diganti.</p>
+
+      <form id="editForm" novalidate>
+        <input type="hidden" id="editRecordId" />
+        <ul id="editFormErrors" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-3 list-disc list-inside space-y-0.5"></ul>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label for="editNamaPaket" class="block text-sm font-medium text-emerald-900 mb-1">Nama Paket / Judul Video</label>
+            <input
+              type="text" id="editNamaPaket"
+              class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm transition-shadow duration-150"
+            />
+          </div>
+
+          <div>
+            <label for="editTabType" class="block text-sm font-medium text-emerald-900 mb-1">Tampilkan di Tab</label>
+            <select id="editTabType" class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm bg-white transition-shadow duration-150">
+              <option value="paket">Flyer Paket</option>
+              <option value="promosi">Flyer Konten</option>
+              <option value="video">Video Konten</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="editKategori" class="block text-sm font-medium text-emerald-900 mb-1">Kategori</label>
+            <select id="editKategori" class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm bg-white transition-shadow duration-150">
+              <option value="">Pilih kategori...</option>
+              <option value="Reguler">Reguler</option>
+              <option value="Plus Turki">Plus Turki</option>
+              <option value="Plus Dubai">Plus Dubai</option>
+              <option value="Plus Al-Aqsa">Plus Al-Aqsa</option>
+              <option value="Ramadhan">Ramadhan</option>
+              <option value="Akbar">Akbar</option>
+              <option value="VIP / Eksekutif">VIP / Eksekutif</option>
+              <option value="Lainnya">Lainnya...</option>
+            </select>
+            <div id="editKategoriLainnyaWrap" class="hidden mt-2">
+              <input
+                type="text" id="editKategoriLainnya" placeholder="Tulis nama kategori"
+                class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm transition-shadow duration-150"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label id="editFlyerFileLabel" for="editFlyerFile" class="block text-sm font-medium text-emerald-900 mb-1">Ganti Flyer (opsional)</label>
+            <input
+              type="file" id="editFlyerFile" accept="image/jpeg,image/png"
+              class="field-input w-full border border-emerald-900/20 rounded-xl px-3 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-emerald-800 file:text-white file:text-xs file:font-semibold hover:file:bg-emerald-900 transition-shadow duration-150"
+            />
+            <p id="editFlyerHint" class="text-[11px] text-emerald-700/60 mt-1">Kosongkan jika flyer tidak diganti. Maks 10MB.</p>
+            <div id="editFlyerPreview" class="mt-2 w-24 h-32 rounded-xl overflow-hidden border border-emerald-900/10"></div>
+          </div>
+
+          <div class="sm:col-span-2">
+            <label for="editCaption" class="block text-sm font-medium text-emerald-900 mb-1">Caption untuk Marketing</label>
+            <textarea
+              id="editCaption" rows="6"
+              class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm leading-relaxed transition-shadow duration-150"
+            ></textarea>
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="flex items-center gap-2.5 bg-emerald-900/5 border border-emerald-900/10 rounded-xl px-3.5 py-3 cursor-pointer select-none">
+              <input type="checkbox" id="editSoldOut" class="w-4 h-4 accent-red-600" />
+              <span class="text-sm font-medium text-emerald-900">Tandai item ini sebagai <span class="text-red-600 font-semibold">Sold Out</span></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex gap-2 mt-5">
+          <button type="button" id="editCancelBtn" class="flex-1 border border-emerald-900/20 text-emerald-900 text-sm font-semibold rounded-xl py-2.5 hover:bg-emerald-900/5 transition-colors">Batal</button>
+          <button type="submit" id="editSubmitBtn" class="flex-1 inline-flex items-center justify-center gap-2 bg-gold-500 hover:bg-gold-600 text-emerald-950 text-sm font-bold rounded-xl py-2.5 transition-colors duration-200 active:scale-[0.98]">
+            <i class="fa-solid fa-floppy-disk"></i><span>Simpan Perubahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: ATUR POSISI NOMOR HP
+  ========================================================= -->
+  <div id="positionModal" class="hidden fixed inset-0 z-[68] bg-emerald-950/60 backdrop-blur-sm flex items-center justify-center px-4 py-8 overflow-y-auto">
+    <div class="modal-in bg-white rounded-2xl shadow-xl w-full max-w-md p-5 my-auto">
+      <div class="flex items-center gap-2 mb-1">
+        <i class="fa-solid fa-location-crosshairs text-gold-600"></i>
+        <h3 class="font-display text-lg text-emerald-900">Atur Posisi Nomor HP</h3>
+      </div>
+      <p class="text-sm text-emerald-700/70 mb-3">
+        Geser penanda emas ke posisi nomor HP pada flyer, atau klik langsung di titik yang diinginkan.
+        Posisi ini dipakai otomatis setiap flyer diunduh oleh agen mana pun.
+      </p>
+
+      <label class="flex items-center gap-2.5 bg-emerald-900/5 border border-emerald-900/10 rounded-xl px-3.5 py-3 cursor-pointer select-none mb-3">
+        <input type="checkbox" id="posEnabledCheckbox" class="w-4 h-4 accent-emerald-700" checked />
+        <span class="text-sm font-medium text-emerald-900">Tampilkan nomor HP pada flyer ini</span>
+      </label>
+
+      <div id="posImageWrap" class="relative w-full rounded-xl overflow-hidden border border-emerald-900/10 bg-emerald-900/5 select-none">
+        <canvas id="posCanvas" class="w-full h-auto block cursor-crosshair"></canvas>
+        <div id="posCanvasLoading" class="hidden absolute inset-0 flex items-center justify-center text-emerald-700/60 text-sm bg-emerald-900/5">
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat preview...
+        </div>
+        <div id="posDisabledOverlay" class="hidden absolute inset-0 flex items-center justify-center bg-emerald-950/40 text-white text-xs sm:text-sm font-semibold px-4 text-center pointer-events-none">
+          Nomor HP dinonaktifkan untuk flyer ini — pengaturan posisi di bawah tidak akan dipakai saat diunduh.
+        </div>
+      </div>
+
+      <div id="posControlsWrap" class="grid grid-cols-2 gap-3 mt-4">
+        <div>
+          <label class="block text-xs font-medium text-emerald-900 mb-1">Ukuran Teks</label>
+          <input type="range" id="posSizeRange" min="0.5" max="15" step="0.1" class="w-full" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-emerald-900 mb-1">Warna Teks</label>
+          <input type="color" id="posColorInput" class="w-full h-9 rounded-lg border border-emerald-900/20" />
+        </div>
+      </div>
+
+      <div class="flex gap-2 mt-5">
+        <button type="button" id="posCancelBtn" class="flex-1 border border-emerald-900/20 text-emerald-900 text-sm font-semibold rounded-xl py-2.5 hover:bg-emerald-900/5 transition-colors">Batal</button>
+        <button type="button" id="posSaveBtn" class="flex-1 inline-flex items-center justify-center gap-2 bg-gold-500 hover:bg-gold-600 text-emerald-950 text-sm font-bold rounded-xl py-2.5 transition-colors duration-200 active:scale-[0.98]">
+          <i class="fa-solid fa-floppy-disk"></i><span>Simpan Posisi</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: PREVIEW / ZOOM FLYER — & PEMUTAR VIDEO
+  ========================================================= -->
+  <div id="lightboxModal" class="hidden fixed inset-0 z-[70] bg-emerald-950/90 backdrop-blur-sm flex flex-col">
+    <div class="flex items-center justify-between px-4 sm:px-6 py-3 shrink-0">
+      <div class="min-w-0 pr-3">
+        <p id="lightboxTitle" class="text-white font-semibold text-sm sm:text-base truncate"></p>
+        <p id="lightboxSubtitle" class="text-emerald-200/70 text-[11px] sm:text-xs">Klik gambar untuk zoom in/out &middot; geser untuk melihat detail</p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" id="lightboxOpenNewTabBtn" class="hidden inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition-colors duration-200">
+          <i class="fa-solid fa-up-right-from-square"></i><span class="hidden sm:inline">Buka di Tab Baru</span>
+        </button>
+        <button type="button" id="lightboxDownloadBtn" class="hidden sm:inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-600 text-emerald-950 text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition-colors duration-200">
+          <i class="fa-solid fa-arrow-down-to-line"></i><span>Download</span>
+        </button>
+        <button type="button" id="lightboxCloseBtn" aria-label="Tutup preview" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors duration-200">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="lightboxImgWrap" class="flex-1 flex items-center justify-center px-3 pb-4 sm:px-6 sm:pb-6">
+      <img id="lightboxImg" src="" alt="Preview flyer" class="max-w-full max-h-full rounded-lg shadow-2xl select-none" draggable="false" />
+      <div id="lightboxVideoWrap" class="hidden">
+        <iframe
+          id="lightboxVideoFrame"
+          class="rounded-lg shadow-2xl border-0"
+          src=""
+          title="Pemutar video"
+          allow="autoplay; fullscreen"
+          allowfullscreen
+        ></iframe>
+        <div id="lightboxVideoFallback" class="hidden flex-col items-center gap-3 text-center bg-emerald-900/40 border border-gold-400/30 rounded-lg p-5">
+          <p class="text-emerald-100 text-xs sm:text-sm leading-relaxed">
+            Jika tombol putar di atas tidak merespons, gunakan tombol di bawah ini —
+            video akan dibuka &amp; diputar di tab baru.
+          </p>
+          <button type="button" id="lightboxVideoFallbackBtn" class="inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-600 text-emerald-950 text-sm font-bold px-4 py-2.5 rounded-xl transition-colors duration-200 active:scale-[0.98]">
+            <i class="fa-solid fa-up-right-from-square"></i><span>Buka &amp; Putar Video di Tab Baru</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-6 left-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
+
+  <!-- ========================================================
+       BAGIAN SCRIPT
+  ========================================================= -->
+  <script>
+    /* ==========================================================
+       0. KONFIGURASI API — WAJIB DIISI SEBELUM DEPLOY
+       ------------------------------------------------------------
+       HARUS SAMA PERSIS dengan APPS_SCRIPT_URL di index.html — satu
+       backend Apps Script dipakai bersama oleh kedua halaman.
+    ========================================================== */
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxY_khfSOOAofcxk9yL0MzOuh7FOZ7lRtFwxpYvtA9vNaml__tSfFmy4JQ82e6HfuRrlg/exec";
+
+    /* ==========================================================
+       0.1 STATE APLIKASI
+    ========================================================== */
+    let allPromoData = [];   // cache data paket dari server
+    let adminPin = "";       // PIN yang sudah terverifikasi pada sesi ini
+    let adminUserId = "";    // User ID yang sedang login (sesi ini)
+    let adminNama = "";      // Nama tampilan admin yang sedang login (opsional)
+    let lightboxRecord = null; // record yang sedang dipreview di modal zoom/pemutar
+    let dragState = { draggedId: null }; // state drag-and-drop urutan paket admin
+    let currentAdminTabFilter = "__all__";
+
+    const ALLOWED_IMAGE_MIME_TYPES = ["image/jpeg", "image/png"];
+    const ALLOWED_VIDEO_MIME_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+    const MAX_IMAGE_SIZE_MB = 10;
+    const MAX_VIDEO_SIZE_MB = 35;
+
+    const FALLBACK_IMAGE =
+      "data:image/svg+xml;charset=UTF-8," +
+      encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="450" height="650" viewBox="0 0 450 650">
+          <rect width="450" height="650" fill="#EFEAE0"/>
+          <g fill="none" stroke="#C9A227" stroke-width="2">
+            <rect x="185" y="255" width="80" height="80"/>
+            <rect x="185" y="255" width="80" height="80" transform="rotate(45 225 295)"/>
+          </g>
+          <text x="225" y="380" font-family="sans-serif" font-size="18" fill="#5C6F65" text-anchor="middle">
+            Gambar flyer tidak tersedia
+          </text>
+        </svg>
+      `);
+
+    const FALLBACK_VIDEO_IMAGE =
+      "data:image/svg+xml;charset=UTF-8," +
+      encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="450" height="253" viewBox="0 0 450 253">
+          <rect width="450" height="253" fill="#08291F"/>
+          <circle cx="225" cy="105" r="34" fill="none" stroke="#DDBA55" stroke-width="2.5"/>
+          <polygon points="215,88 246,105 215,122" fill="#DDBA55"/>
+          <text x="225" y="175" font-family="sans-serif" font-size="15" fill="#EAD48C" text-anchor="middle">
+            Thumbnail video belum tersedia
+          </text>
+        </svg>
+      `);
+
+    /* ==========================================================
+       0.5 CUSTOM DROPDOWN (pengganti <select> native)
+    ========================================================== */
+    function enhanceSelectAsDropdown(selectEl) {
+      if (!selectEl || selectEl.dataset.customDropdownReady === "true") return;
+      selectEl.dataset.customDropdownReady = "true";
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "custom-dropdown";
+      selectEl.parentNode.insertBefore(wrapper, selectEl);
+      wrapper.appendChild(selectEl);
+
+      const trigger = document.createElement("button");
+      trigger.type = "button";
+      trigger.className =
+        "custom-dropdown-trigger field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm bg-white transition-shadow duration-150 flex items-center justify-between gap-2 text-left";
+      trigger.innerHTML =
+        '<span class="custom-dropdown-label truncate"></span>' +
+        '<i class="fa-solid fa-chevron-down text-xs text-emerald-700/50 shrink-0"></i>';
+      wrapper.appendChild(trigger);
+
+      const list = document.createElement("div");
+      list.className =
+        "custom-dropdown-list hidden absolute left-0 right-0 mt-1 z-20 bg-white border border-emerald-900/15 rounded-xl shadow-lg py-1";
+      wrapper.appendChild(list);
+
+      function renderOptions() {
+        list.innerHTML = "";
+        Array.from(selectEl.options).forEach((opt) => {
+          const item = document.createElement("button");
+          item.type = "button";
+          const isSelected = opt.value === selectEl.value;
+          item.className =
+            "w-full text-left px-3.5 py-2.5 text-sm transition-colors " +
+            (isSelected
+              ? "bg-gold-500/15 text-emerald-900 font-semibold"
+              : "text-emerald-950 hover:bg-emerald-900/5");
+          item.textContent = opt.textContent;
+          item.addEventListener("click", () => {
+            selectEl.value = opt.value;
+            selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+            syncLabel();
+            closeList();
+          });
+          list.appendChild(item);
+        });
+      }
+
+      function syncLabel() {
+        const selectedOption = selectEl.options[selectEl.selectedIndex];
+        trigger.querySelector(".custom-dropdown-label").textContent = selectedOption ? selectedOption.textContent : "";
+      }
+
+      function openList() {
+        renderOptions();
+        list.classList.remove("hidden");
+        document.addEventListener("click", handleOutsideClick, true);
+      }
+      function closeList() {
+        list.classList.add("hidden");
+        document.removeEventListener("click", handleOutsideClick, true);
+      }
+      function handleOutsideClick(e) {
+        if (!wrapper.contains(e.target)) closeList();
+      }
+
+      trigger.addEventListener("click", () => {
+        if (list.classList.contains("hidden")) openList();
+        else closeList();
+      });
+
+      syncLabel();
+
+      selectEl._syncCustomDropdown = syncLabel;
+    }
+
+    function setSelectValue(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = value;
+      if (typeof el._syncCustomDropdown === "function") el._syncCustomDropdown();
+    }
+
+    /* ==========================================================
+       1. JEMBATAN KE BACKEND (Google Apps Script) — VIA fetch()
+    ========================================================== */
+    async function runServer(functionName, ...args) {
+      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("GANTI_DENGAN_ID_DEPLOYMENT_ANDA") !== -1) {
+        throw new Error("APPS_SCRIPT_URL belum diisi. Tempel URL Web App Google Apps Script Anda di bagian atas <script>.");
+      }
+
+      let response;
+      try {
+        response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: functionName, args: args }),
+        });
+      } catch (networkErr) {
+        throw new Error("Gagal terhubung ke server. Periksa koneksi internet Anda.");
+      }
+
+      if (!response.ok) {
+        throw new Error("Server merespons dengan error (HTTP " + response.status + ").");
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        throw new Error("Respons server tidak valid.");
+      }
+
+      if (!data || data.ok !== true) {
+        throw new Error((data && data.error) || "Terjadi kesalahan pada server.");
+      }
+      return data.result;
+    }
+
+    /* Utilitas: mencegah karakter caption/nama merusak markup saat disisipkan ke innerHTML */
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str == null ? "" : String(str);
+      return div.innerHTML;
+    }
+
+    function isPhoneOverlayEnabled(record) {
+      if (!record || record.mediaType === "video") return false;
+      return !record.phoneOverlay || record.phoneOverlay.enabled !== false;
+    }
+
+    /* ==========================================================
+       2. MUAT DATA UNTUK PANEL ADMIN
+    ========================================================== */
+    async function loadAdminData() {
+      const spinner = document.getElementById("adminListSpinner");
+      spinner.classList.remove("hidden");
+      try {
+        const data = await runServer("getPromoData");
+        allPromoData = data;
+        renderAdminList(allPromoData);
+      } catch (err) {
+        console.error("Gagal memuat data:", err);
+        showToast(err.message || "Gagal memuat data paket dari server.", "error");
+      } finally {
+        spinner.classList.add("hidden");
+      }
+    }
+
+    function attachImageFallback(imgElement, fileId, mediaType) {
+      imgElement.dataset.fileId = fileId || "";
+      imgElement.dataset.mediaType = mediaType || "gambar";
+      imgElement.dataset.fallbackStage = "0";
+      imgElement.addEventListener("error", () => handleImageError(imgElement));
+    }
+
+    function handleImageError(imgElement) {
+      const stage = imgElement.dataset.fallbackStage || "0";
+      const fileId = imgElement.dataset.fileId;
+      const mediaType = imgElement.dataset.mediaType || "gambar";
+
+      if (stage === "0" && fileId) {
+        imgElement.dataset.fallbackStage = "1";
+        imgElement.src = `https://lh3.googleusercontent.com/d/${fileId}`;
+        return;
+      }
+      if (imgElement.dataset.fallbackStage !== "final") {
+        imgElement.dataset.fallbackStage = "final";
+        imgElement.src = mediaType === "video" ? FALLBACK_VIDEO_IMAGE : FALLBACK_IMAGE;
+        imgElement.classList.remove("opacity-0");
+      }
+    }
+
+    /* ==========================================================
+       3. DOWNLOAD DARI LIGHTBOX (langsung dari Google Drive, tanpa overlay)
+    ========================================================== */
+    function buildDriveDirectDownloadUrl_(fileId) {
+      return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+    }
+
+    function downloadFlyer(record) {
+      if (!record.fileId) {
+        showToast("File tidak ditemukan di Google Drive.", "error");
+        return;
+      }
+      try {
+        const directUrl = buildDriveDirectDownloadUrl_(record.fileId);
+        const tempAnchor = document.createElement("a");
+        tempAnchor.href = directUrl;
+        tempAnchor.rel = "noopener";
+        document.body.appendChild(tempAnchor);
+        tempAnchor.click();
+        document.body.removeChild(tempAnchor);
+        showToast("File sedang diunduh langsung dari Google Drive 📥", "success");
+      } catch (err) {
+        console.error("Download langsung dari Drive gagal:", err);
+        showToast("Gagal membuka unduhan dari Google Drive. Silakan coba lagi.", "error");
+      }
+    }
+
+    /* ==========================================================
+       4. TOAST NOTIFICATION
+    ========================================================== */
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toastContainer");
+      const palette = {
+        success: { bg: "bg-emerald-800", icon: "fa-circle-check" },
+        error: { bg: "bg-red-700", icon: "fa-circle-exclamation" },
+        info: { bg: "bg-emerald-900", icon: "fa-circle-info" },
+      };
+      const style = palette[type] || palette.success;
+
+      const toast = document.createElement("div");
+      toast.className = `toast-enter pointer-events-auto flex items-center gap-2 ${style.bg} text-white text-sm font-medium px-4 py-2.5 rounded-full shadow-lg border border-gold-400/40`;
+      toast.innerHTML = `<i class="fa-solid ${style.icon} text-gold-300"></i><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove("toast-enter");
+        toast.classList.add("toast-exit");
+        toast.addEventListener("animationend", () => toast.remove(), { once: true });
+      }, 2600);
+    }
+
+    /* ==========================================================
+       5. MODAL PREVIEW / ZOOM FLYER & PEMUTAR VIDEO (LIGHTBOX)
+    ========================================================== */
+    function openLightbox(record) {
+      lightboxRecord = record;
+      const modal = document.getElementById("lightboxModal");
+      const img = document.getElementById("lightboxImg");
+      const videoWrap = document.getElementById("lightboxVideoWrap");
+      const videoFrame = document.getElementById("lightboxVideoFrame");
+      const videoFallback = document.getElementById("lightboxVideoFallback");
+      const title = document.getElementById("lightboxTitle");
+      const subtitle = document.getElementById("lightboxSubtitle");
+      const downloadBtn = document.getElementById("lightboxDownloadBtn");
+      const openNewTabBtn = document.getElementById("lightboxOpenNewTabBtn");
+
+      title.textContent = record.titlePaket || (record.mediaType === "video" ? "Preview Video" : "Preview Flyer");
+
+      if (record.mediaType === "video") {
+        img.classList.add("hidden");
+        img.src = "";
+        videoFrame.src = record.videoEmbedUrl || "";
+        videoWrap.classList.remove("hidden");
+        videoWrap.classList.add("flex");
+        videoFallback.classList.remove("hidden");
+        videoFallback.classList.add("flex");
+        subtitle.textContent = "Gunakan kontrol pemutar video di bawah untuk memutar/menjeda.";
+
+        if (record.videoViewUrl) {
+          openNewTabBtn.classList.remove("hidden");
+          openNewTabBtn.onclick = () => window.open(record.videoViewUrl, "_blank");
+        } else {
+          openNewTabBtn.classList.add("hidden");
+          openNewTabBtn.onclick = null;
+        }
+
+        const fallbackBtn = document.getElementById("lightboxVideoFallbackBtn");
+        fallbackBtn.onclick = () => {
+          if (record.videoViewUrl) window.open(record.videoViewUrl, "_blank");
+        };
+      } else {
+        videoWrap.classList.add("hidden");
+        videoWrap.classList.remove("flex");
+        videoFrame.classList.add("hidden");
+        videoFrame.src = "";
+        videoFallback.classList.add("hidden");
+        videoFallback.classList.remove("flex");
+        openNewTabBtn.classList.add("hidden");
+        openNewTabBtn.onclick = null;
+        img.classList.remove("hidden");
+        img.src = record.imageUrl;
+        img.dataset.fileId = record.fileId || "";
+        img.dataset.mediaType = record.mediaType || "gambar";
+        img.dataset.fallbackStage = "0";
+        img.classList.remove("zoomed");
+        img.style.transform = "scale(1)";
+        subtitle.textContent = "Klik gambar untuk zoom in/out · geser untuk melihat detail";
+      }
+
+      downloadBtn.onclick = () => downloadFlyer(record);
+
+      modal.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeLightbox() {
+      const modal = document.getElementById("lightboxModal");
+      const img = document.getElementById("lightboxImg");
+      const videoWrap = document.getElementById("lightboxVideoWrap");
+      const videoFrame = document.getElementById("lightboxVideoFrame");
+      const videoFallback = document.getElementById("lightboxVideoFallback");
+      modal.classList.add("hidden");
+      img.classList.remove("zoomed");
+      img.style.transform = "scale(1)";
+      videoFrame.src = "";
+      videoFrame.classList.add("hidden");
+      videoWrap.classList.add("hidden");
+      videoWrap.classList.remove("flex");
+      videoFallback.classList.add("hidden");
+      videoFallback.classList.remove("flex");
+      document.body.style.overflow = "";
+      lightboxRecord = null;
+    }
+
+    function toggleLightboxZoom(e) {
+      if (lightboxRecord && lightboxRecord.mediaType === "video") return;
+
+      const img = document.getElementById("lightboxImg");
+      const isZoomed = img.classList.contains("zoomed");
+
+      if (isZoomed) {
+        img.classList.remove("zoomed");
+        img.style.transform = "scale(1)";
+      } else {
+        img.classList.add("zoomed");
+        img.style.transform = "scale(2.2)";
+        const wrap = document.getElementById("lightboxImgWrap");
+        requestAnimationFrame(() => {
+          const rect = img.getBoundingClientRect();
+          const clickX = e ? e.clientX - rect.left : rect.width / 2;
+          const clickY = e ? e.clientY - rect.top : rect.height / 2;
+          wrap.scrollLeft = clickX * 1.2 - wrap.clientWidth / 2;
+          wrap.scrollTop = clickY * 1.2 - wrap.clientHeight / 2;
+        });
+      }
+    }
+
+    document.getElementById("lightboxImg").addEventListener("click", (e) => toggleLightboxZoom(e));
+    document.getElementById("lightboxImg").addEventListener("error", function () {
+      handleImageError(this);
+    });
+    document.getElementById("lightboxCloseBtn").addEventListener("click", closeLightbox);
+
+    document.getElementById("lightboxModal").addEventListener("click", (e) => {
+      if (e.target.id === "lightboxModal" || e.target.id === "lightboxImgWrap") {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (!document.getElementById("lightboxModal").classList.contains("hidden")) {
+        closeLightbox();
+      } else if (!document.getElementById("positionModal").classList.contains("hidden")) {
+        closePositionModal();
+      } else if (!document.getElementById("editModal").classList.contains("hidden")) {
+        closeEditModal();
+      }
+    });
+
+    /* ==========================================================
+       6. LOGIN ADMIN (USER ID + PIN) & INISIALISASI PANEL
+    ========================================================== */
+    function updateAdminIdentityBadge() {
+      const badge = document.getElementById("adminLoggedInAs");
+      const nameEl = document.getElementById("adminLoggedInAsName");
+      if (adminUserId) {
+        nameEl.textContent = adminNama ? `${adminNama} (${adminUserId})` : adminUserId;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+    }
+
+    function enterAdminPanel() {
+      document.getElementById("pinModal").classList.add("hidden");
+      document.getElementById("adminView").classList.remove("hidden");
+      updateAdminIdentityBadge();
+      loadAdminData();
+    }
+
+    function openPinModal() {
+      document.getElementById("pinModal").classList.remove("hidden");
+      document.getElementById("pinUserIdInput").value = "";
+      document.getElementById("pinInput").value = "";
+      document.getElementById("pinError").classList.add("hidden");
+      document.getElementById("pinUserIdInput").focus();
+    }
+
+    document.getElementById("pinForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const userId = document.getElementById("pinUserIdInput").value.trim();
+      const pin = document.getElementById("pinInput").value.trim();
+      const pinError = document.getElementById("pinError");
+      const submitBtn = document.getElementById("pinSubmitBtn");
+      const originalContent = submitBtn.innerHTML;
+
+      pinError.classList.add("hidden");
+
+      if (!userId || !pin) {
+        pinError.textContent = "User ID dan PIN wajib diisi.";
+        pinError.classList.remove("hidden");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+      try {
+        const result = await runServer("verifyAdminLogin", userId, pin);
+        adminPin = pin;
+        adminUserId = result.userId || userId;
+        adminNama = result.nama || "";
+        enterAdminPanel();
+        showToast(`Berhasil masuk sebagai ${adminNama || adminUserId}. ✅`, "success");
+      } catch (err) {
+        pinError.textContent = err.message || "Gagal memverifikasi User ID/PIN.";
+        pinError.classList.remove("hidden");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalContent;
+      }
+    });
+
+    /* ==========================================================
+       7. FORM TAMBAH PAKET / VIDEO
+    ========================================================== */
+    document.getElementById("inputKategori").addEventListener("change", (e) => {
+      const wrap = document.getElementById("kategoriLainnyaWrap");
+      if (e.target.value === "Lainnya") {
+        wrap.classList.remove("hidden");
+      } else {
+        wrap.classList.add("hidden");
+        document.getElementById("inputKategoriLainnya").value = "";
+      }
+    });
+
+    function applyMediaAcceptForTabType(tabTypeValue, fileInputEl, labelEl, hintEl) {
+      const isVideo = tabTypeValue === "video";
+      fileInputEl.accept = isVideo
+        ? "video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+        : "image/jpeg,image/png";
+      if (labelEl) {
+        labelEl.textContent = isVideo ? "Upload Video (MP4/WEBM/MOV)" : "Upload Flyer (JPG/PNG)";
+      }
+      if (hintEl) {
+        hintEl.textContent = isVideo
+          ? `Format MP4/WEBM/MOV, ukuran maksimal ${MAX_VIDEO_SIZE_MB}MB (mendukung video resolusi HD 720p/1080p — hindari kompresi berlebihan agar hasil download tetap tajam).`
+          : `Format JPG/PNG, ukuran maksimal ${MAX_IMAGE_SIZE_MB}MB (mendukung flyer resolusi HD). Posisi nomor HP bisa diatur setelah paket disimpan, lewat tombol "Atur Posisi No. HP" pada daftar di bawah.`;
+      }
+    }
+
+    document.getElementById("inputTabType").addEventListener("change", (e) => {
+      applyMediaAcceptForTabType(
+        e.target.value,
+        document.getElementById("inputFlyerFile"),
+        document.getElementById("inputFlyerFileLabel"),
+        document.getElementById("inputFlyerHint")
+      );
+      document.getElementById("inputFlyerFile").value = "";
+      document.getElementById("flyerPreview").classList.add("hidden");
+      document.getElementById("flyerPreview").innerHTML = "";
+    });
+
+    document.getElementById("inputFlyerFile").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      const previewWrap = document.getElementById("flyerPreview");
+      if (!file) {
+        previewWrap.classList.add("hidden");
+        previewWrap.innerHTML = "";
+        return;
+      }
+      const objectUrl = URL.createObjectURL(file);
+      if (file.type.startsWith("video/")) {
+        previewWrap.innerHTML = `<video src="${objectUrl}" class="w-full h-full object-cover" muted playsinline controls></video>`;
+      } else {
+        previewWrap.innerHTML = `<img src="${objectUrl}" class="w-full h-full object-cover" alt="Preview flyer" />`;
+      }
+      previewWrap.classList.remove("hidden");
+    });
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",")[1]);
+        reader.onerror = () => reject(new Error("Gagal membaca file gambar/video."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function resetPromoForm() {
+      document.getElementById("promoForm").reset();
+      document.getElementById("kategoriLainnyaWrap").classList.add("hidden");
+      document.getElementById("flyerPreview").classList.add("hidden");
+      document.getElementById("flyerPreview").innerHTML = "";
+      document.getElementById("formErrors").classList.add("hidden");
+      setSelectValue("inputTabType", "paket");
+      setSelectValue("inputKategori", "");
+      applyMediaAcceptForTabType(
+        "paket",
+        document.getElementById("inputFlyerFile"),
+        document.getElementById("inputFlyerFileLabel"),
+        document.getElementById("inputFlyerHint")
+      );
+    }
+
+    document.getElementById("promoForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errorBox = document.getElementById("formErrors");
+      const errors = [];
+
+      const namaPaket = document.getElementById("inputNamaPaket").value.trim();
+      const tabType = document.getElementById("inputTabType").value;
+      const mediaType = tabType === "video" ? "video" : "gambar";
+      const kategoriSelect = document.getElementById("inputKategori").value;
+      const kategoriLainnya = document.getElementById("inputKategoriLainnya").value.trim();
+      const kategori = kategoriSelect === "Lainnya" ? kategoriLainnya : kategoriSelect;
+      const caption = document.getElementById("inputCaption").value.trim();
+      const fileInput = document.getElementById("inputFlyerFile");
+      const file = fileInput.files[0];
+
+      if (namaPaket.length < 3) errors.push("Nama paket/judul video minimal 3 karakter.");
+      if (!kategori) errors.push("Kategori wajib dipilih/diisi.");
+      if (caption.length < 10) errors.push("Caption marketing minimal 10 karakter.");
+
+      if (!file) {
+        errors.push(mediaType === "video" ? "File video (MP4/WEBM/MOV) wajib diunggah." : "Flyer gambar (JPG/PNG) wajib diunggah.");
+      } else if (mediaType === "video") {
+        if (!ALLOWED_VIDEO_MIME_TYPES.includes(file.type)) errors.push("Format video harus MP4, WEBM, atau MOV.");
+        if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) errors.push(`Ukuran video maksimal ${MAX_VIDEO_SIZE_MB}MB.`);
+      } else {
+        if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.type)) errors.push("Format flyer harus JPG atau PNG.");
+        if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) errors.push(`Ukuran flyer maksimal ${MAX_IMAGE_SIZE_MB}MB.`);
+      }
+
+      if (errors.length > 0) {
+        errorBox.innerHTML = errors.map((msg) => `<li>${escapeHtml(msg)}</li>`).join("");
+        errorBox.classList.remove("hidden");
+        return;
+      }
+      errorBox.classList.add("hidden");
+
+      const submitBtn = document.getElementById("btnSubmitPaket");
+      const originalContent = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
+
+      try {
+        const imageBase64 = await fileToBase64(file);
+        const newRecord = await runServer("addPromoPaket", {
+          namaPaket, kategori, caption, tabType, mediaType,
+          imageBase64, mimeType: file.type, fileName: file.name,
+          pin: adminPin,
+        });
+
+        allPromoData.unshift(newRecord);
+        renderAdminList(allPromoData);
+        resetPromoForm();
+        showToast(
+          mediaType === "video"
+            ? "Video berhasil ditambahkan & dipublikasikan! 🎬"
+            : "Paket berhasil ditambahkan & dipublikasikan! 🎉 Atur posisi nomor HP-nya lewat daftar di bawah.",
+          "success"
+        );
+      } catch (err) {
+        console.error("Gagal menyimpan paket:", err);
+        errorBox.innerHTML = `<li>${escapeHtml(err.message || "Gagal menyimpan data ke server.")}</li>`;
+        errorBox.classList.remove("hidden");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalContent;
+      }
+    });
+
+    /* ==========================================================
+       8. DAFTAR PAKET TERSIMPAN — FILTER, URUTKAN, EDIT, HAPUS
+    ========================================================== */
+    function updateAdminFilterButtons() {
+      const buttons = [
+        { id: "adminFilterAll", value: "__all__" },
+        { id: "adminFilterPromosi", value: "promosi" },
+        { id: "adminFilterPaket", value: "paket" },
+        { id: "adminFilterVideo", value: "video" },
+      ];
+      buttons.forEach(({ id, value }) => {
+        const btn = document.getElementById(id);
+        const isActive = value === currentAdminTabFilter;
+        btn.classList.toggle("bg-emerald-800", isActive);
+        btn.classList.toggle("text-white", isActive);
+        btn.classList.toggle("text-emerald-800/70", !isActive);
+      });
+    }
+    document.getElementById("adminFilterAll").addEventListener("click", () => {
+      currentAdminTabFilter = "__all__";
+      updateAdminFilterButtons();
+      renderAdminList(allPromoData);
+    });
+    document.getElementById("adminFilterPromosi").addEventListener("click", () => {
+      currentAdminTabFilter = "promosi";
+      updateAdminFilterButtons();
+      renderAdminList(allPromoData);
+    });
+    document.getElementById("adminFilterPaket").addEventListener("click", () => {
+      currentAdminTabFilter = "paket";
+      updateAdminFilterButtons();
+      renderAdminList(allPromoData);
+    });
+    document.getElementById("adminFilterVideo").addEventListener("click", () => {
+      currentAdminTabFilter = "video";
+      updateAdminFilterButtons();
+      renderAdminList(allPromoData);
+    });
+
+    function renderAdminList(data) {
+      const list = document.getElementById("adminList");
+      const emptyAdmin = document.getElementById("adminListEmpty");
+      list.innerHTML = "";
+
+      const scoped = currentAdminTabFilter === "__all__"
+        ? data
+        : data.filter((d) => (d.tabType || "paket") === currentAdminTabFilter);
+
+      if (!scoped || scoped.length === 0) {
+        emptyAdmin.classList.remove("hidden");
+        return;
+      }
+      emptyAdmin.classList.add("hidden");
+
+      scoped.forEach((record, index) => {
+        const isVideo = record.mediaType === "video";
+        const row = document.createElement("div");
+        row.className = "flex items-center gap-2 sm:gap-3 bg-white border border-emerald-900/10 rounded-xl p-3 transition-shadow duration-150";
+        row.draggable = true;
+        row.dataset.id = record.id;
+
+        const soldOutBadge = record.isSoldOut
+          ? '<span class="inline-block mt-0.5 ml-1 text-[11px] px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-medium">Sold Out</span>'
+          : "";
+        const tabBadge = record.tabType === "video"
+          ? '<span class="inline-block mt-0.5 ml-1 text-[11px] px-2 py-0.5 rounded-full bg-emerald-800/10 text-emerald-800 font-medium"><i class="fa-solid fa-video mr-1"></i>Video Konten</span>'
+          : record.tabType === "promosi"
+            ? '<span class="inline-block mt-0.5 ml-1 text-[11px] px-2 py-0.5 rounded-full bg-emerald-800/10 text-emerald-800 font-medium"><i class="fa-solid fa-bullhorn mr-1"></i>Konten</span>'
+            : '<span class="inline-block mt-0.5 ml-1 text-[11px] px-2 py-0.5 rounded-full bg-emerald-800/10 text-emerald-800 font-medium"><i class="fa-solid fa-kaaba mr-1"></i>Paket</span>';
+        const phoneOffBadge = !isVideo && !isPhoneOverlayEnabled(record)
+          ? '<span class="inline-block mt-0.5 ml-1 text-[11px] px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium"><i class="fa-solid fa-phone-slash mr-1"></i>No. HP Nonaktif</span>'
+          : "";
+
+        const positionBtnMarkup = isVideo
+          ? ""
+          : `<button type="button" class="btn-position w-8 h-8 rounded-lg border border-emerald-900/15 text-emerald-800 hover:bg-emerald-900/5 transition-colors" title="Atur posisi nomor HP">
+               <i class="fa-solid fa-location-crosshairs text-xs"></i>
+             </button>`;
+
+        row.innerHTML = `
+          <div class="shrink-0 text-emerald-700/30 hover:text-emerald-700/60 cursor-grab active:cursor-grabbing px-0.5" title="Geser untuk mengurutkan">
+            <i class="fa-solid fa-grip-lines"></i>
+          </div>
+          <img src="${escapeHtml(record.imageUrl)}" alt="${escapeHtml(record.titlePaket)}" class="flyer-clickable w-12 h-16 object-cover rounded-lg bg-emerald-900/5 shrink-0" />
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-emerald-900 truncate">${escapeHtml(record.titlePaket)}</p>
+            <span class="inline-block mt-0.5 text-[11px] px-2 py-0.5 rounded-full bg-gold-500/15 text-gold-600 font-medium">${escapeHtml(record.kategori || "-")}</span>${tabBadge}${soldOutBadge}${phoneOffBadge}
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button type="button" class="btn-move-up w-7 h-7 rounded-md border border-emerald-900/15 text-emerald-800 hover:bg-emerald-900/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Pindah ke atas" ${index === 0 ? "disabled" : ""}>
+              <i class="fa-solid fa-chevron-up text-xs"></i>
+            </button>
+            <button type="button" class="btn-move-down w-7 h-7 rounded-md border border-emerald-900/15 text-emerald-800 hover:bg-emerald-900/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Pindah ke bawah" ${index === scoped.length - 1 ? "disabled" : ""}>
+              <i class="fa-solid fa-chevron-down text-xs"></i>
+            </button>
+            <button type="button" class="btn-soldout w-8 h-8 rounded-lg border transition-colors ${record.isSoldOut ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100" : "border-emerald-900/15 text-emerald-800 hover:bg-emerald-900/5"}" title="${record.isSoldOut ? "Tandai tersedia kembali" : "Tandai Sold Out"}">
+              <i class="fa-solid ${record.isSoldOut ? "fa-rotate-left" : "fa-ban"} text-xs"></i>
+            </button>
+            ${positionBtnMarkup}
+            <button type="button" class="btn-edit-paket w-8 h-8 rounded-lg border border-emerald-900/15 text-emerald-800 hover:bg-emerald-900/5 transition-colors" title="Edit item">
+              <i class="fa-solid fa-pen text-xs"></i>
+            </button>
+            <button type="button" class="btn-delete-paket w-8 h-8 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors" title="Hapus item">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+          </div>
+        `;
+
+        const thumbImg = row.querySelector("img");
+        attachImageFallback(thumbImg, record.fileId, record.mediaType);
+        thumbImg.addEventListener("click", () => openLightbox(record));
+
+        row.querySelector(".btn-move-up").addEventListener("click", () => moveAdminPaket(record.id, -1));
+        row.querySelector(".btn-move-down").addEventListener("click", () => moveAdminPaket(record.id, 1));
+        row.querySelector(".btn-soldout").addEventListener("click", (e) => toggleSoldOut(record, e.currentTarget));
+        const positionBtnEl = row.querySelector(".btn-position");
+        if (positionBtnEl) {
+          positionBtnEl.addEventListener("click", () => openPositionModal(record));
+        }
+        row.querySelector(".btn-edit-paket").addEventListener("click", () => openEditModal(record));
+        row.querySelector(".btn-delete-paket").addEventListener("click", () => confirmDeletePaket(record));
+
+        row.addEventListener("dragstart", (e) => {
+          dragState.draggedId = record.id;
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", record.id);
+          setTimeout(() => row.classList.add("opacity-40"), 0);
+        });
+        row.addEventListener("dragend", () => {
+          row.classList.remove("opacity-40");
+          clearDragOverStyles_();
+          dragState.draggedId = null;
+        });
+        row.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          if (!dragState.draggedId || dragState.draggedId === record.id) return;
+          const rect = row.getBoundingClientRect();
+          const isAfter = e.clientY - rect.top > rect.height / 2;
+          clearDragOverStyles_();
+          row.classList.add(isAfter ? "border-b-2" : "border-t-2", "border-gold-500");
+        });
+        row.addEventListener("dragleave", () => {
+          row.classList.remove("border-t-2", "border-b-2", "border-gold-500");
+        });
+        row.addEventListener("drop", (e) => {
+          e.preventDefault();
+          clearDragOverStyles_();
+          const draggedId = dragState.draggedId || e.dataTransfer.getData("text/plain");
+          if (!draggedId || draggedId === record.id) return;
+
+          const rect = row.getBoundingClientRect();
+          const isAfter = e.clientY - rect.top > rect.height / 2;
+
+          const fromIndex = allPromoData.findIndex((d) => d.id === draggedId);
+          if (fromIndex === -1) return;
+          const [moved] = allPromoData.splice(fromIndex, 1);
+
+          let toIndex = allPromoData.findIndex((d) => d.id === record.id);
+          if (toIndex === -1) toIndex = allPromoData.length;
+          if (isAfter) toIndex += 1;
+
+          allPromoData.splice(toIndex, 0, moved);
+          renderAdminList(allPromoData);
+          persistAdminOrder();
+        });
+
+        list.appendChild(row);
+      });
+    }
+
+    function clearDragOverStyles_() {
+      document.querySelectorAll("#adminList > div").forEach((el) => {
+        el.classList.remove("border-t-2", "border-b-2", "border-gold-500");
+      });
+    }
+
+    function moveAdminPaket(id, direction) {
+      const scoped = currentAdminTabFilter === "__all__"
+        ? allPromoData
+        : allPromoData.filter((d) => (d.tabType || "paket") === currentAdminTabFilter);
+
+      const scopedIndex = scoped.findIndex((d) => d.id === id);
+      const neighborScopedIndex = scopedIndex + direction;
+      if (scopedIndex === -1 || neighborScopedIndex < 0 || neighborScopedIndex >= scoped.length) return;
+
+      const neighborId = scoped[neighborScopedIndex].id;
+      const globalIndexA = allPromoData.findIndex((d) => d.id === id);
+      const globalIndexB = allPromoData.findIndex((d) => d.id === neighborId);
+      if (globalIndexA === -1 || globalIndexB === -1) return;
+
+      const temp = allPromoData[globalIndexA];
+      allPromoData[globalIndexA] = allPromoData[globalIndexB];
+      allPromoData[globalIndexB] = temp;
+      renderAdminList(allPromoData);
+      persistAdminOrder();
+    }
+
+    let orderSaveTimer = null;
+    function persistAdminOrder() {
+      clearTimeout(orderSaveTimer);
+      orderSaveTimer = setTimeout(async () => {
+        try {
+          const orderedIds = allPromoData.map((d) => d.id);
+          await runServer("updatePromoOrder", orderedIds, adminPin);
+          showToast("Urutan berhasil disimpan.", "success");
+        } catch (err) {
+          console.error("Gagal menyimpan urutan:", err);
+          showToast(err.message || "Gagal menyimpan urutan.", "error");
+        }
+      }, 600);
+    }
+
+    async function toggleSoldOut(record, buttonEl) {
+      const newStatus = !record.isSoldOut;
+      const originalContent = buttonEl ? buttonEl.innerHTML : null;
+      if (buttonEl) {
+        buttonEl.disabled = true;
+        buttonEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i>';
+      }
+
+      try {
+        const result = await runServer("updateSoldOutStatus", record.id, newStatus, adminPin);
+
+        const index = allPromoData.findIndex((d) => d.id === record.id);
+        if (index !== -1) {
+          allPromoData[index] = Object.assign({}, allPromoData[index], { isSoldOut: result.isSoldOut });
+        }
+
+        renderAdminList(allPromoData);
+        showToast(
+          result.isSoldOut ? "Item ditandai Sold Out. 🔴" : "Item ditandai tersedia kembali. ✅",
+          "success"
+        );
+      } catch (err) {
+        console.error("Gagal mengubah status sold out:", err);
+        showToast(err.message || "Gagal mengubah status sold out.", "error");
+        if (buttonEl && originalContent !== null) {
+          buttonEl.disabled = false;
+          buttonEl.innerHTML = originalContent;
+        }
+      }
+    }
+
+    async function confirmDeletePaket(record) {
+      const ok = confirm(`Hapus "${record.titlePaket}"? Tindakan ini tidak dapat dibatalkan.`);
+      if (!ok) return;
+      try {
+        await runServer("deletePromoPaket", record.id, adminPin);
+        allPromoData = allPromoData.filter((d) => d.id !== record.id);
+        renderAdminList(allPromoData);
+        showToast("Item berhasil dihapus.", "success");
+      } catch (err) {
+        console.error("Gagal menghapus item:", err);
+        showToast(err.message || "Gagal menghapus item.", "error");
+      }
+    }
+
+    /* ==========================================================
+       9. MODAL EDIT PAKET / VIDEO
+    ========================================================== */
+    function openEditModal(record) {
+      document.getElementById("editRecordId").value = record.id;
+      document.getElementById("editNamaPaket").value = record.titlePaket;
+      document.getElementById("editCaption").value = record.captionText;
+      document.getElementById("editSoldOut").checked = !!record.isSoldOut;
+
+      const editTabTypeValue = record.tabType === "video" ? "video" : (record.tabType === "promosi" ? "promosi" : "paket");
+      setSelectValue("editTabType", editTabTypeValue);
+      applyMediaAcceptForTabType(
+        editTabTypeValue,
+        document.getElementById("editFlyerFile"),
+        document.getElementById("editFlyerFileLabel"),
+        document.getElementById("editFlyerHint")
+      );
+
+      const kategoriSelect = document.getElementById("editKategori");
+      const knownValues = Array.from(kategoriSelect.options).map((o) => o.value);
+      const lainnyaWrap = document.getElementById("editKategoriLainnyaWrap");
+      const lainnyaInput = document.getElementById("editKategoriLainnya");
+
+      if (knownValues.includes(record.kategori)) {
+        setSelectValue("editKategori", record.kategori);
+        lainnyaWrap.classList.add("hidden");
+        lainnyaInput.value = "";
+      } else {
+        setSelectValue("editKategori", "Lainnya");
+        lainnyaWrap.classList.remove("hidden");
+        lainnyaInput.value = record.kategori || "";
+      }
+
+      document.getElementById("editFlyerFile").value = "";
+      if (record.mediaType === "video") {
+        document.getElementById("editFlyerPreview").innerHTML =
+          `<div class="w-full h-full flex flex-col items-center justify-center bg-emerald-900/5 text-emerald-700/60 text-[10px] text-center p-1">
+             <i class="fa-solid fa-video text-lg mb-1"></i>Video tersimpan
+           </div>`;
+      } else {
+        document.getElementById("editFlyerPreview").innerHTML =
+          `<img src="${escapeHtml(record.imageUrl)}" class="w-full h-full object-cover" alt="Flyer saat ini" />`;
+      }
+
+      document.getElementById("editFormErrors").classList.add("hidden");
+      document.getElementById("editModal").classList.remove("hidden");
+    }
+
+    function closeEditModal() {
+      document.getElementById("editModal").classList.add("hidden");
+    }
+
+    document.getElementById("editCancelBtn").addEventListener("click", closeEditModal);
+    document.getElementById("editModal").addEventListener("click", (e) => {
+      if (e.target.id === "editModal") closeEditModal();
+    });
+
+    document.getElementById("editKategori").addEventListener("change", (e) => {
+      const wrap = document.getElementById("editKategoriLainnyaWrap");
+      if (e.target.value === "Lainnya") {
+        wrap.classList.remove("hidden");
+      } else {
+        wrap.classList.add("hidden");
+        document.getElementById("editKategoriLainnya").value = "";
+      }
+    });
+
+    document.getElementById("editTabType").addEventListener("change", (e) => {
+      applyMediaAcceptForTabType(
+        e.target.value,
+        document.getElementById("editFlyerFile"),
+        document.getElementById("editFlyerFileLabel"),
+        document.getElementById("editFlyerHint")
+      );
+    });
+
+    document.getElementById("editFlyerFile").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      const previewWrap = document.getElementById("editFlyerPreview");
+      if (!file) {
+        const currentId = document.getElementById("editRecordId").value;
+        const record = allPromoData.find((d) => d.id === currentId);
+        if (record && record.mediaType === "video") {
+          previewWrap.innerHTML =
+            `<div class="w-full h-full flex flex-col items-center justify-center bg-emerald-900/5 text-emerald-700/60 text-[10px] text-center p-1">
+               <i class="fa-solid fa-video text-lg mb-1"></i>Video tersimpan
+             </div>`;
+        } else {
+          previewWrap.innerHTML = record
+            ? `<img src="${escapeHtml(record.imageUrl)}" class="w-full h-full object-cover" alt="Flyer saat ini" />`
+            : "";
+        }
+        return;
+      }
+      const objectUrl = URL.createObjectURL(file);
+      if (file.type.startsWith("video/")) {
+        previewWrap.innerHTML = `<video src="${objectUrl}" class="w-full h-full object-cover" muted playsinline controls></video>`;
+      } else {
+        previewWrap.innerHTML = `<img src="${objectUrl}" class="w-full h-full object-cover" alt="Preview flyer baru" />`;
+      }
+    });
+
+    document.getElementById("editForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errorBox = document.getElementById("editFormErrors");
+      const errors = [];
+
+      const id = document.getElementById("editRecordId").value;
+      const namaPaket = document.getElementById("editNamaPaket").value.trim();
+      const tabType = document.getElementById("editTabType").value;
+      const mediaType = tabType === "video" ? "video" : "gambar";
+      const kategoriSelect = document.getElementById("editKategori").value;
+      const kategoriLainnya = document.getElementById("editKategoriLainnya").value.trim();
+      const kategori = kategoriSelect === "Lainnya" ? kategoriLainnya : kategoriSelect;
+      const caption = document.getElementById("editCaption").value.trim();
+      const soldOut = document.getElementById("editSoldOut").checked;
+      const fileInput = document.getElementById("editFlyerFile");
+      const file = fileInput.files[0];
+
+      const existingRecord = allPromoData.find((d) => d.id === id);
+      const oldMediaType = existingRecord ? existingRecord.mediaType : "gambar";
+
+      if (namaPaket.length < 3) errors.push("Nama paket/judul video minimal 3 karakter.");
+      if (!kategori) errors.push("Kategori wajib dipilih/diisi.");
+      if (caption.length < 10) errors.push("Caption marketing minimal 10 karakter.");
+
+      if (mediaType !== oldMediaType && !file) {
+        errors.push(
+          mediaType === "video"
+            ? "Untuk memindahkan item ini ke tab Video Konten, unggah file video (MP4/WEBM/MOV) terlebih dahulu."
+            : "Untuk memindahkan item video ini ke tab Flyer, unggah file gambar (JPG/PNG) terlebih dahulu."
+        );
+      }
+
+      if (file) {
+        if (mediaType === "video") {
+          if (!ALLOWED_VIDEO_MIME_TYPES.includes(file.type)) errors.push("Format video harus MP4, WEBM, atau MOV.");
+          if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) errors.push(`Ukuran video maksimal ${MAX_VIDEO_SIZE_MB}MB.`);
+        } else {
+          if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.type)) errors.push("Format flyer harus JPG atau PNG.");
+          if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) errors.push(`Ukuran flyer maksimal ${MAX_IMAGE_SIZE_MB}MB.`);
+        }
+      }
+
+      if (errors.length > 0) {
+        errorBox.innerHTML = errors.map((msg) => `<li>${escapeHtml(msg)}</li>`).join("");
+        errorBox.classList.remove("hidden");
+        return;
+      }
+      errorBox.classList.add("hidden");
+
+      const submitBtn = document.getElementById("editSubmitBtn");
+      const originalContent = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
+
+      try {
+        const payload = { id, namaPaket, kategori, caption, soldOut, tabType, mediaType, pin: adminPin };
+        if (file) {
+          payload.imageBase64 = await fileToBase64(file);
+          payload.mimeType = file.type;
+          payload.fileName = file.name;
+        }
+        const updatedRecord = await runServer("updatePromoPaket", payload);
+
+        const index = allPromoData.findIndex((d) => d.id === id);
+        if (index !== -1) {
+          allPromoData[index] = Object.assign({}, allPromoData[index], updatedRecord);
+        }
+
+        renderAdminList(allPromoData);
+        closeEditModal();
+        showToast("Item berhasil diperbarui! ✏️", "success");
+      } catch (err) {
+        console.error("Gagal memperbarui item:", err);
+        errorBox.innerHTML = `<li>${escapeHtml(err.message || "Gagal menyimpan perubahan ke server.")}</li>`;
+        errorBox.classList.remove("hidden");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalContent;
+      }
+    });
+
+    /* ==========================================================
+       10. MODAL "ATUR POSISI NOMOR HP"
+    ========================================================== */
+    let positionState = null;
+    let posDragging = false;
+    let posImageEl = null;
+
+    async function ensurePhoneFontLoaded() {
+      try {
+        if (document.fonts && document.fonts.load) {
+          await document.fonts.load('700 100px "Poppins"');
+        }
+      } catch (e) {
+        // lanjutkan saja
+      }
+    }
+
+    function loadImageElement(url, fileId) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        let stage = 0;
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          if (stage === 0 && fileId) {
+            stage = 1;
+            img.src = `https://lh3.googleusercontent.com/d/${fileId}`;
+            return;
+          }
+          reject(new Error("Gagal memuat gambar flyer untuk preview posisi."));
+        };
+        img.src = url;
+      });
+    }
+
+    function updatePositionEnabledUI() {
+      if (!positionState) return;
+      const disabledOverlay = document.getElementById("posDisabledOverlay");
+      const controlsWrap = document.getElementById("posControlsWrap");
+      disabledOverlay.classList.toggle("hidden", positionState.enabled);
+      controlsWrap.classList.toggle("opacity-40", !positionState.enabled);
+      controlsWrap.classList.toggle("pointer-events-none", !positionState.enabled);
+    }
+
+    async function openPositionModal(record) {
+      if (record.mediaType === "video") {
+        showToast("Fitur ini tidak berlaku untuk item video.", "error");
+        return;
+      }
+
+      const overlay = record.phoneOverlay || { x: 10, y: 87, sizePct: 3, color: "#FFFFFF", enabled: true };
+      positionState = {
+        record,
+        x: overlay.x,
+        y: overlay.y,
+        sizePct: overlay.sizePct,
+        color: overlay.color,
+        enabled: overlay.enabled !== false,
+      };
+
+      document.getElementById("posSizeRange").value = positionState.sizePct;
+      document.getElementById("posColorInput").value = positionState.color;
+      document.getElementById("posEnabledCheckbox").checked = positionState.enabled;
+      updatePositionEnabledUI();
+      document.getElementById("positionModal").classList.remove("hidden");
+
+      const loadingEl = document.getElementById("posCanvasLoading");
+      loadingEl.classList.remove("hidden");
+      posImageEl = null;
+
+      try {
+        await ensurePhoneFontLoaded();
+        posImageEl = await loadImageElement(record.imageUrl, record.fileId);
+        drawPositionCanvas();
+      } catch (err) {
+        console.error("Gagal memuat preview posisi:", err);
+        showToast(err.message || "Gagal memuat preview posisi nomor HP.", "error");
+      } finally {
+        loadingEl.classList.add("hidden");
+      }
+    }
+
+    function closePositionModal() {
+      document.getElementById("positionModal").classList.add("hidden");
+      positionState = null;
+      posImageEl = null;
+    }
+
+    function drawPositionCanvas() {
+      if (!positionState || !posImageEl) return;
+      const canvas = document.getElementById("posCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const w = posImageEl.naturalWidth || posImageEl.width;
+      const h = posImageEl.naturalHeight || posImageEl.height;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(posImageEl, 0, 0, w, h);
+
+      const posX = (positionState.x / 100) * w;
+      const posY = (positionState.y / 100) * h;
+      const fontSizePx = Math.max(8, Math.round((positionState.sizePct / 100) * w));
+
+      ctx.font = `700 ${fontSizePx}px "Poppins", Arial, sans-serif`;
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      ctx.fillStyle = positionState.color || "#FFFFFF";
+      ctx.fillText("0812-3456-7890", posX, posY);
+
+      const dotRadius = Math.max(5, fontSizePx * 0.12);
+      ctx.beginPath();
+      ctx.arc(posX, posY, dotRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "#C9A227";
+      ctx.fill();
+      ctx.lineWidth = Math.max(2, dotRadius * 0.35);
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.stroke();
+    }
+
+    function updatePositionFromPointer(clientX, clientY) {
+      const canvas = document.getElementById("posCanvas");
+      const rect = canvas.getBoundingClientRect();
+      let xPct = ((clientX - rect.left) / rect.width) * 100;
+      let yPct = ((clientY - rect.top) / rect.height) * 100;
+      positionState.x = Math.min(100, Math.max(0, xPct));
+      positionState.y = Math.min(100, Math.max(0, yPct));
+      drawPositionCanvas();
+    }
+
+    document.getElementById("posCanvas").addEventListener("pointerdown", (e) => {
+      if (!positionState) return;
+      posDragging = true;
+      updatePositionFromPointer(e.clientX, e.clientY);
+      e.preventDefault();
+    });
+    document.getElementById("posCanvas").addEventListener("pointermove", (e) => {
+      if (!posDragging || !positionState) return;
+      updatePositionFromPointer(e.clientX, e.clientY);
+    });
+    document.addEventListener("pointerup", () => {
+      posDragging = false;
+    });
+
+    document.getElementById("posSizeRange").addEventListener("input", (e) => {
+      if (!positionState) return;
+      positionState.sizePct = Number(e.target.value);
+      drawPositionCanvas();
+    });
+    document.getElementById("posColorInput").addEventListener("input", (e) => {
+      if (!positionState) return;
+      positionState.color = e.target.value;
+      drawPositionCanvas();
+    });
+    document.getElementById("posEnabledCheckbox").addEventListener("change", (e) => {
+      if (!positionState) return;
+      positionState.enabled = e.target.checked;
+      updatePositionEnabledUI();
+    });
+
+    document.getElementById("posCancelBtn").addEventListener("click", closePositionModal);
+    document.getElementById("positionModal").addEventListener("click", (e) => {
+      if (e.target.id === "positionModal") closePositionModal();
+    });
+
+    document.getElementById("posSaveBtn").addEventListener("click", async () => {
+      if (!positionState) return;
+      const saveBtn = document.getElementById("posSaveBtn");
+      const originalContent = saveBtn.innerHTML;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
+
+      try {
+        const overlayPayload = {
+          x: positionState.x, y: positionState.y,
+          sizePct: positionState.sizePct, color: positionState.color,
+          enabled: positionState.enabled,
+        };
+        const result = await runServer("updatePhoneOverlay", positionState.record.id, overlayPayload, adminPin);
+
+        const index = allPromoData.findIndex((d) => d.id === positionState.record.id);
+        if (index !== -1) {
+          allPromoData[index] = Object.assign({}, allPromoData[index], { phoneOverlay: result.phoneOverlay });
+        }
+
+        renderAdminList(allPromoData);
+        showToast("Posisi nomor HP berhasil disimpan.", "success");
+        closePositionModal();
+      } catch (err) {
+        console.error("Gagal menyimpan posisi nomor HP:", err);
+        showToast(err.message || "Gagal menyimpan posisi nomor HP.", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalContent;
+      }
+    });
+
+    /* ==========================================================
+       11. LOGO HEADER — FALLBACK BERTINGKAT
+    ========================================================== */
+    function handleLogoError(imgElement) {
+      const stage = imgElement.dataset.fallbackStage || "0";
+      const fileId = "10b9HsU9mVgsoVirI2bzzX1jlJhkaj6GZ";
+
+      if (stage === "0") {
+        imgElement.dataset.fallbackStage = "1";
+        imgElement.src = `https://lh3.googleusercontent.com/d/${fileId}`;
+        return;
+      }
+      const wrap = imgElement.parentElement;
+      wrap.innerHTML = '<i class="fa-solid fa-star-and-crescent text-gold-400 text-lg"></i>';
+    }
+
+    /* ==========================================================
+       12. INISIALISASI HALAMAN
+    ========================================================== */
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("currentYear").textContent = new Date().getFullYear();
+      updateAdminFilterButtons();
+
+      enhanceSelectAsDropdown(document.getElementById("inputTabType"));
+      enhanceSelectAsDropdown(document.getElementById("inputKategori"));
+      enhanceSelectAsDropdown(document.getElementById("editTabType"));
+      enhanceSelectAsDropdown(document.getElementById("editKategori"));
+
+      const logoImg = document.getElementById("logoImg");
+      if (logoImg) {
+        logoImg.addEventListener("error", () => handleLogoError(logoImg));
+      }
+
+      const adminListEl = document.getElementById("adminList");
+      adminListEl.addEventListener("dragover", (e) => e.preventDefault());
+      adminListEl.addEventListener("drop", (e) => {
+        if (e.target !== adminListEl) return;
+        e.preventDefault();
+        const draggedId = dragState.draggedId;
+        if (!draggedId) return;
+        const fromIndex = allPromoData.findIndex((d) => d.id === draggedId);
+        if (fromIndex === -1) return;
+        const [moved] = allPromoData.splice(fromIndex, 1);
+        allPromoData.push(moved);
+        renderAdminList(allPromoData);
+        persistAdminOrder();
+      });
+
+      // Panel admin selalu meminta login saat halaman ini dibuka —
+      // tidak ada sesi yang disimpan/di-cache di browser.
+      openPinModal();
+    });
+  </script>
+</body>
+</html>
