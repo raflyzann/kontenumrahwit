@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <!-- ========================================================
+       META & TITLE
+  ========================================================= -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>Wahdah Islamic Travel — Flyer & Konten Umrah</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome via CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Google Fonts: Reem Kufi (display) + Plus Jakarta Sans (body/UI) + Poppins (overlay nomor HP) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind custom config: warna & font tema Islami (putih, hijau zamrud, aksen emas) -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#FAF8F2',
+            emerald: {
+              950: '#08291F', 900: '#0B3D2E', 800: '#0E4F3B',
+              700: '#116447', 600: '#157A56', 500: '#1A9268',
+            },
+            gold: { 300: '#EAD48C', 400: '#DDBA55', 500: '#C9A227', 600: '#A9841D' },
+          },
+          fontFamily: {
+            display: ['"Reem Kufi"', 'sans-serif'],
+            body: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- ========================================================
+       CUSTOM STYLE
+  ========================================================= -->
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FAF8F2; }
+    .font-display { font-family: 'Reem Kufi', sans-serif; }
+
+    .caption-scroll::-webkit-scrollbar { width: 6px; }
+    .caption-scroll::-webkit-scrollbar-track { background: transparent; }
+    .caption-scroll::-webkit-scrollbar-thumb { background-color: #DDBA55; border-radius: 999px; }
+    .caption-scroll { scrollbar-width: thin; scrollbar-color: #DDBA55 transparent; }
+    .caption-text { white-space: pre-line; }
+
+    @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    @keyframes toast-out { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, 12px); } }
+    .toast-enter { animation: toast-in 0.25s ease-out forwards; }
+    .toast-exit { animation: toast-out 0.25s ease-in forwards; }
+
+    .btn-copy-icon, .btn-copy-label { transition: all 0.2s ease; }
+
+    .promo-card { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
+    .promo-card:hover { transform: translateY(-4px); box-shadow: 0 20px 35px -12px rgba(11, 61, 46, 0.25); border-color: #DDBA55; }
+
+    .img-skeleton { background: linear-gradient(100deg, #EFEAE0 30%, #F8F5EC 50%, #EFEAE0 70%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { 0% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+
+    @keyframes modal-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+    .modal-in { animation: modal-in 0.18s ease-out forwards; }
+
+    .field-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(17, 100, 71, 0.18); border-color: #116447; }
+
+    /* --- Preview flyer (lightbox) --- */
+    .flyer-clickable { cursor: zoom-in; }
+    #lightboxModal { animation: modal-in 0.15s ease-out forwards; }
+    #lightboxImgWrap {
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #DDBA55 transparent;
+    }
+    #lightboxImgWrap::-webkit-scrollbar { width: 8px; height: 8px; }
+    #lightboxImgWrap::-webkit-scrollbar-thumb { background-color: #DDBA55; border-radius: 999px; }
+    #lightboxImg {
+      transition: transform 0.2s ease;
+      cursor: zoom-in;
+      touch-action: pinch-zoom;
+    }
+    #lightboxImg.zoomed { cursor: zoom-out; }
+    #lightboxVideoFrame {
+      width: min(92vw, 900px);
+      height: min(70vh, 506px);
+      background: #000;
+    }
+    #lightboxVideoWrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    #lightboxVideoFallback {
+      width: min(92vw, 900px);
+    }
+
+    .soldout-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 41, 31, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .soldout-ribbon {
+      background: #C0392B;
+      color: #FFFFFF;
+      font-family: 'Reem Kufi', sans-serif;
+      letter-spacing: 0.15em;
+      font-size: 1.05rem;
+      padding: 0.4rem 1.75rem;
+      border: 2px solid rgba(255,255,255,0.85);
+      box-shadow: 0 8px 20px -6px rgba(0,0,0,0.5);
+      transform: rotate(-8deg);
+    }
+
+    .tab-nav-btn {
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+    .tab-nav-btn[data-active="true"] {
+      background-color: #DDBA55;
+      color: #08291F;
+      border-color: #DDBA55;
+    }
+    .tab-nav-btn[data-active="false"] {
+      background-color: transparent;
+      color: #EAD48C;
+      border-color: rgba(234, 212, 140, 0.35);
+    }
+    .tab-nav-btn[data-active="false"]:hover {
+      border-color: rgba(234, 212, 140, 0.7);
+      background-color: rgba(234, 212, 140, 0.08);
+    }
+  </style>
+</head>
+
+<body class="bg-cream text-emerald-950 antialiased">
+
+  <!-- ========================================================
+       BAGIAN 1 — HEADER
+  ========================================================= -->
+  <header class="bg-emerald-900 text-cream">
+    <div class="max-w-5xl mx-auto px-5 pt-8 pb-6 sm:px-8">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 shrink-0 rounded-full bg-emerald-800 border-2 border-gold-500 flex items-center justify-center overflow-hidden">
+            <img
+              id="logoImg"
+              src="https://drive.google.com/thumbnail?id=10b9HsU9mVgsoVirI2bzzX1jlJhkaj6GZ&sz=w100"
+              alt="Logo Wahdah Islamic Travel"
+              class="w-full h-full object-cover"
+              data-fallback-stage="0"
+            />
+          </div>
+          <div>
+            <h1 class="font-display text-2xl sm:text-3xl tracking-wide text-white leading-none">Wahdah Islamic Travel</h1>
+            <p class="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-gold-400 mt-1">Flyer &amp; Konten Umrah</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            id="agentPhoneBtn"
+            type="button"
+            title="Opsional: jika diisi, nomor HP ini akan otomatis ditempelkan ke flyer gambar saat Anda download"
+            class="inline-flex items-center gap-2 bg-emerald-800/80 hover:bg-emerald-800 border border-gold-500/40 text-gold-300 text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition-colors duration-200"
+          >
+            <i class="fa-solid fa-phone"></i>
+            <span id="agentPhoneLabel" class="hidden sm:inline">Atur No. HP</span>
+          </button>
+        </div>
+      </div>
+      <p class="mt-4 text-emerald-100/90 text-sm sm:text-base max-w-xl leading-relaxed">
+        Kumpulan flyer paket Umrah &amp; video konten beserta caption marketing siap pakai —
+        klik gambar/video untuk melihat preview besar, unduh filenya (nomor HP Anda
+        akan otomatis ditempel pada flyer gambar jika sudah diatur di tombol "No. HP" — bersifat
+        opsional), lalu salin captionnya untuk disebar ke pelanggan.
+      </p>
+
+      <div id="tabNavigation" class="mt-5 inline-flex flex-wrap gap-2" role="tablist" aria-label="Katalog Flyer &amp; Video">
+        <button
+          type="button" id="tabBtnPaket" class="tab-nav-btn inline-flex items-center gap-2 border text-xs sm:text-sm font-semibold px-4 py-2 rounded-full"
+          role="tab" data-tab="paket" data-active="true"
+        >
+          <i class="fa-solid fa-kaaba"></i><span>Flyer Paket</span>
+        </button>
+        <button
+          type="button" id="tabBtnPromosi" class="tab-nav-btn inline-flex items-center gap-2 border text-xs sm:text-sm font-semibold px-4 py-2 rounded-full"
+          role="tab" data-tab="promosi" data-active="false"
+        >
+          <i class="fa-solid fa-bullhorn"></i><span>Flyer Konten</span>
+        </button>
+        <button
+          type="button" id="tabBtnVideo" class="tab-nav-btn inline-flex items-center gap-2 border text-xs sm:text-sm font-semibold px-4 py-2 rounded-full"
+          role="tab" data-tab="video" data-active="false"
+        >
+          <i class="fa-solid fa-video"></i><span>Video Konten</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="w-full leading-none" aria-hidden="true">
+      <svg width="100%" height="26" preserveAspectRatio="none" role="presentation">
+        <defs>
+          <pattern id="minimalDiamondPattern" width="96" height="26" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="13" x2="96" y2="13" stroke="#C9A227" stroke-width="1" stroke-opacity="0.55" />
+            <rect x="44" y="9" width="8" height="8" fill="#0B3D2E" stroke="#C9A227" stroke-width="1.25" transform="rotate(45 48 13)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="26" fill="url(#minimalDiamondPattern)" />
+      </svg>
+    </div>
+  </header>
+
+  <!-- ========================================================
+       BAGIAN 2 — MAIN CONTENT (GALERI PUBLIK)
+  ========================================================= -->
+  <main class="max-w-5xl mx-auto px-5 sm:px-8 py-8">
+
+    <section id="galleryView">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="galleryTitle" class="font-display text-lg sm:text-xl text-emerald-900">Katalog Flyer Paket</h2>
+        <span id="paketCounter" class="text-xs sm:text-sm text-emerald-700/70 font-medium"></span>
+      </div>
+
+      <div id="categoryFilters" class="flex flex-wrap gap-2 mb-5"></div>
+
+      <div id="gallerySpinner" class="py-16 text-center text-emerald-700/60">
+        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+        <p class="text-sm">Memuat data paket...</p>
+      </div>
+
+      <section id="promoContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6" aria-live="polite"></section>
+
+      <div id="emptyState" class="hidden text-center py-16 text-emerald-700/60">
+        <i class="fa-regular fa-image text-4xl mb-3"></i>
+        <p id="emptyStateText">Belum ada flyer yang tersedia saat ini.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========================================================
+       BAGIAN 4 — FOOTER
+  ========================================================= -->
+  <footer class="bg-emerald-950 text-emerald-100/80 mt-10">
+    <div class="max-w-5xl mx-auto px-5 sm:px-8 py-7 flex items-center justify-center text-xs sm:text-sm">
+      <p>&copy; <span id="currentYear"></span> Wahdah Islamic Travel. Materi promosi untuk kalangan internal agen &amp; tim marketing.</p>
+    </div>
+  </footer>
+
+  <!-- ========================================================
+       MODAL: NOMOR HP AGEN
+  ========================================================= -->
+  <div id="phoneModal" class="hidden fixed inset-0 z-[62] bg-emerald-950/60 backdrop-blur-sm flex items-center justify-center px-5">
+    <div class="modal-in bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+      <div class="flex items-center gap-2 mb-1">
+        <i class="fa-solid fa-phone text-gold-600"></i>
+        <h3 class="font-display text-lg text-emerald-900">Nomor HP Anda (Opsional)</h3>
+      </div>
+      <p class="text-sm text-emerald-700/70 mb-4">
+        Jika diisi, nomor ini akan otomatis ditempelkan ke flyer <strong>gambar</strong> setiap kali Anda menekan "Download"
+        (tidak berlaku untuk item video). Nomor disimpan di browser ini
+        dan bisa diubah kapan pun lewat tombol "No. HP" di pojok atas. Anda tetap bisa
+        mengunduh flyer tanpa mengisi nomor ini.
+      </p>
+
+      <form id="phoneForm">
+        <input
+          type="tel" id="phoneInputField" placeholder="Contoh: 0812-3456-7890" inputmode="tel" autocomplete="tel"
+          class="field-input w-full border border-emerald-900/20 rounded-xl px-3.5 py-2.5 text-sm mb-2 transition-shadow duration-150"
+        />
+        <p id="phoneError" class="hidden text-xs text-red-600 mb-2"></p>
+
+        <div class="flex gap-2 mt-4">
+          <button type="button" id="phoneCancelBtn" class="flex-1 border border-emerald-900/20 text-emerald-900 text-sm font-semibold rounded-xl py-2.5 hover:bg-emerald-900/5 transition-colors">Batal</button>
+          <button type="submit" id="phoneSubmitBtn" class="flex-1 bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-semibold rounded-xl py-2.5 transition-colors">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL: PREVIEW / ZOOM FLYER — & PEMUTAR VIDEO
+  ========================================================= -->
+  <div id="lightboxModal" class="hidden fixed inset-0 z-[70] bg-emerald-950/90 backdrop-blur-sm flex flex-col">
+    <div class="flex items-center justify-between px-4 sm:px-6 py-3 shrink-0">
+      <div class="min-w-0 pr-3">
+        <p id="lightboxTitle" class="text-white font-semibold text-sm sm:text-base truncate"></p>
+        <p id="lightboxSubtitle" class="text-emerald-200/70 text-[11px] sm:text-xs">Klik gambar untuk zoom in/out &middot; geser untuk melihat detail</p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" id="lightboxOpenNewTabBtn" class="hidden inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition-colors duration-200">
+          <i class="fa-solid fa-up-right-from-square"></i><span class="hidden sm:inline">Buka di Tab Baru</span>
+        </button>
+        <button type="button" id="lightboxDownloadBtn" class="hidden sm:inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-600 text-emerald-950 text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition-colors duration-200">
+          <i class="fa-solid fa-arrow-down-to-line"></i><span>Download</span>
+        </button>
+        <button type="button" id="lightboxCloseBtn" aria-label="Tutup preview" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors duration-200">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="lightboxImgWrap" class="flex-1 flex items-center justify-center px-3 pb-4 sm:px-6 sm:pb-6">
+      <img id="lightboxImg" src="" alt="Preview flyer" class="max-w-full max-h-full rounded-lg shadow-2xl select-none" draggable="false" />
+      <div id="lightboxVideoWrap" class="hidden">
+        <iframe
+          id="lightboxVideoFrame"
+          class="rounded-lg shadow-2xl border-0"
+          src=""
+          title="Pemutar video"
+          allow="autoplay; fullscreen"
+          allowfullscreen
+        ></iframe>
+        <div id="lightboxVideoFallback" class="hidden flex-col items-center gap-3 text-center bg-emerald-900/40 border border-gold-400/30 rounded-lg p-5">
+          <p class="text-emerald-100 text-xs sm:text-sm leading-relaxed">
+            Jika tombol putar di atas tidak merespons, gunakan tombol di bawah ini —
+            video akan dibuka &amp; diputar di tab baru.
+          </p>
+          <button type="button" id="lightboxVideoFallbackBtn" class="inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-600 text-emerald-950 text-sm font-bold px-4 py-2.5 rounded-xl transition-colors duration-200 active:scale-[0.98]">
+            <i class="fa-solid fa-up-right-from-square"></i><span>Buka &amp; Putar Video di Tab Baru</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-6 left-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
+
+  <!-- ========================================================
+       BAGIAN SCRIPT
+  ========================================================= -->
+  <script>
+    /* ==========================================================
+       0. KONFIGURASI API — WAJIB DIISI SEBELUM DEPLOY
+       ------------------------------------------------------------
+       Tempel di sini URL Web App Google Apps Script Anda (dari Deploy >
+       Manage deployments), formatnya:
+         https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxx/exec
+       HARUS SAMA PERSIS dengan yang dipakai di admin.html (satu backend
+       dipakai bersama oleh kedua halaman).
+    ========================================================== */
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxY_khfSOOAofcxk9yL0MzOuh7FOZ7lRtFwxpYvtA9vNaml__tSfFmy4JQ82e6HfuRrlg/exec";
+
+    /* ==========================================================
+       0.1 STATE APLIKASI
+    ========================================================== */
+    let allPromoData = [];   // cache data paket dari server
+    let lightboxRecord = null; // record yang sedang dipreview di modal zoom/pemutar
+
+    let currentTab = "paket";
+    const TAB_LABELS = {
+      paket: "Katalog Flyer Paket",
+      promosi: "Katalog Flyer Konten",
+      video: "Katalog Video Konten",
+    };
+    const TAB_EMPTY_TEXT = {
+      paket: "Belum ada flyer paket yang tersedia saat ini.",
+      promosi: "Belum ada flyer konten yang tersedia saat ini.",
+      video: "Belum ada video konten yang tersedia saat ini.",
+    };
+
+    const FALLBACK_IMAGE =
+      "data:image/svg+xml;charset=UTF-8," +
+      encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="450" height="650" viewBox="0 0 450 650">
+          <rect width="450" height="650" fill="#EFEAE0"/>
+          <g fill="none" stroke="#C9A227" stroke-width="2">
+            <rect x="185" y="255" width="80" height="80"/>
+            <rect x="185" y="255" width="80" height="80" transform="rotate(45 225 295)"/>
+          </g>
+          <text x="225" y="380" font-family="sans-serif" font-size="18" fill="#5C6F65" text-anchor="middle">
+            Gambar flyer tidak tersedia
+          </text>
+        </svg>
+      `);
+
+    const FALLBACK_VIDEO_IMAGE =
+      "data:image/svg+xml;charset=UTF-8," +
+      encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="450" height="253" viewBox="0 0 450 253">
+          <rect width="450" height="253" fill="#08291F"/>
+          <circle cx="225" cy="105" r="34" fill="none" stroke="#DDBA55" stroke-width="2.5"/>
+          <polygon points="215,88 246,105 215,122" fill="#DDBA55"/>
+          <text x="225" y="175" font-family="sans-serif" font-size="15" fill="#EAD48C" text-anchor="middle">
+            Thumbnail video belum tersedia
+          </text>
+        </svg>
+      `);
+
+    /* ==========================================================
+       1. JEMBATAN KE BACKEND (Google Apps Script) — VIA fetch()
+    ========================================================== */
+    async function runServer(functionName, ...args) {
+      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("GANTI_DENGAN_ID_DEPLOYMENT_ANDA") !== -1) {
+        throw new Error("APPS_SCRIPT_URL belum diisi. Tempel URL Web App Google Apps Script Anda di bagian atas <script>.");
+      }
+
+      let response;
+      try {
+        response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: functionName, args: args }),
+        });
+      } catch (networkErr) {
+        throw new Error("Gagal terhubung ke server. Periksa koneksi internet Anda.");
+      }
+
+      if (!response.ok) {
+        throw new Error("Server merespons dengan error (HTTP " + response.status + ").");
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        throw new Error("Respons server tidak valid.");
+      }
+
+      if (!data || data.ok !== true) {
+        throw new Error((data && data.error) || "Terjadi kesalahan pada server.");
+      }
+      return data.result;
+    }
+
+    /* Utilitas: mencegah karakter caption/nama merusak markup saat disisipkan ke innerHTML */
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str == null ? "" : String(str);
+      return div.innerHTML;
+    }
+
+    function isPhoneOverlayEnabled(record) {
+      if (!record || record.mediaType === "video") return false;
+      return !record.phoneOverlay || record.phoneOverlay.enabled !== false;
+    }
+
+    /* ==========================================================
+       2. GALERI PUBLIK — MUAT & RENDER DATA
+    ========================================================== */
+    async function loadGallery() {
+      const spinner = document.getElementById("gallerySpinner");
+      spinner.classList.remove("hidden");
+      try {
+        const data = await runServer("getPromoData");
+        allPromoData = data;
+        renderTabCounts();
+        applyTabAndRenderGallery();
+      } catch (err) {
+        console.error("Gagal memuat data:", err);
+        showToast(err.message || "Gagal memuat data paket dari server.", "error");
+        document.getElementById("emptyState").classList.remove("hidden");
+      } finally {
+        spinner.classList.add("hidden");
+      }
+    }
+
+    function getDataForCurrentTab() {
+      return allPromoData.filter((d) => (d.tabType || "paket") === currentTab);
+    }
+
+    function applyTabAndRenderGallery() {
+      const scoped = getDataForCurrentTab();
+      document.getElementById("galleryTitle").textContent = TAB_LABELS[currentTab];
+      document.getElementById("emptyStateText").textContent = TAB_EMPTY_TEXT[currentTab];
+      renderCategoryFilters(scoped);
+      renderPromoCards(scoped);
+    }
+
+    function renderCategoryFilters(data) {
+      const wrap = document.getElementById("categoryFilters");
+      const categories = [...new Set(data.map((d) => d.kategori).filter(Boolean))];
+      wrap.innerHTML = "";
+
+      const activeClasses = ["bg-emerald-800", "text-white", "border-emerald-800"];
+      const idleClasses = ["bg-white", "text-emerald-800", "border-emerald-800/30"];
+
+      const makeChip = (label, value, isActive) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = label;
+        btn.className = `px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold border transition-colors duration-200 ${(isActive ? activeClasses : idleClasses).join(" ")}`;
+        btn.addEventListener("click", () => {
+          wrap.querySelectorAll("button").forEach((b) => {
+            b.classList.remove(...activeClasses);
+            b.classList.add(...idleClasses);
+          });
+          btn.classList.remove(...idleClasses);
+          btn.classList.add(...activeClasses);
+          const scoped = getDataForCurrentTab();
+          const filtered = value === "__all__" ? scoped : scoped.filter((d) => d.kategori === value);
+          renderPromoCards(filtered);
+        });
+        return btn;
+      };
+
+      wrap.appendChild(makeChip("Semua", "__all__", true));
+      categories.forEach((cat) => wrap.appendChild(makeChip(cat, cat, false)));
+    }
+
+    function renderPromoCards(data) {
+      const container = document.getElementById("promoContainer");
+      const emptyState = document.getElementById("emptyState");
+      const counter = document.getElementById("paketCounter");
+
+      container.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        emptyState.classList.remove("hidden");
+        counter.textContent = "";
+        return;
+      }
+      emptyState.classList.add("hidden");
+      counter.textContent = `${data.length} item tersedia`;
+
+      data.forEach((record) => {
+        const isVideo = record.mediaType === "video";
+        const card = document.createElement("article");
+        card.className = "promo-card bg-white rounded-2xl border border-emerald-900/10 shadow-sm overflow-hidden flex flex-col";
+
+        const soldOutMarkup = record.isSoldOut
+          ? `<div class="soldout-overlay"><span class="soldout-ribbon">SOLD OUT</span></div>`
+          : "";
+
+        const aspectClass = isVideo ? "aspect-video" : "aspect-[9/13]";
+
+        const playIconMarkup = isVideo
+          ? `<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+               <div class="w-14 h-14 rounded-full bg-emerald-950/60 border-2 border-white/80 flex items-center justify-center">
+                 <i class="fa-solid fa-play text-white text-xl ml-1"></i>
+               </div>
+             </div>`
+          : "";
+
+        const cornerBadgeMarkup = isVideo
+          ? `<span class="absolute bottom-3 right-3 bg-emerald-950/70 text-white text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm pointer-events-none">
+               <i class="fa-solid fa-circle-play mr-1"></i>Putar Video
+             </span>`
+          : `<span class="absolute bottom-3 right-3 bg-emerald-950/70 text-white text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm pointer-events-none">
+               <i class="fa-solid fa-magnifying-glass-plus mr-1"></i>Lihat Preview
+             </span>`;
+
+        card.innerHTML = `
+          <div class="relative ${aspectClass} bg-emerald-900/5 img-skeleton">
+            <img
+              src="${escapeHtml(record.imageUrl)}" alt="${isVideo ? "Thumbnail" : "Flyer"} ${escapeHtml(record.titlePaket)}" loading="lazy"
+              class="flyer-clickable w-full h-full object-cover opacity-0 transition-opacity duration-500"
+              data-fallback-applied="false"
+            />
+            ${playIconMarkup}
+            ${soldOutMarkup}
+            <span class="absolute top-3 left-3 bg-emerald-900/90 text-gold-300 text-[11px] font-semibold tracking-wide px-2.5 py-1 rounded-full backdrop-blur-sm pointer-events-none">
+              <i class="fa-solid ${isVideo ? "fa-video" : "fa-kaaba"} mr-1"></i>${escapeHtml(record.kategori || (isVideo ? "Video" : "Umrah"))}
+            </span>
+            ${cornerBadgeMarkup}
+          </div>
+          <div class="flex flex-col flex-1 p-4 sm:p-5">
+            <h3 class="font-display text-base sm:text-lg text-emerald-900 mb-2">${escapeHtml(record.titlePaket)}</h3>
+            <div class="caption-scroll caption-text text-sm text-emerald-950/80 leading-relaxed max-h-40 overflow-y-auto mb-4 pr-1 border-l-2 border-gold-400/60 pl-3">${escapeHtml(record.captionText)}</div>
+            <div class="mt-auto flex gap-2 pt-1">
+              <button type="button" data-action="download" class="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-semibold px-3 py-2.5 rounded-xl transition-colors duration-200 active:scale-[0.98]">
+                <i class="fa-solid fa-arrow-down-to-line"></i><span>${isVideo ? "Download Video" : "Download JPG"}</span>
+              </button>
+              <button type="button" data-action="copy" class="flex-1 inline-flex items-center justify-center gap-2 border-2 border-gold-500 text-emerald-900 hover:bg-gold-500 hover:text-emerald-950 text-sm font-semibold px-3 py-2.5 rounded-xl transition-colors duration-200 active:scale-[0.98]">
+                <i class="fa-regular fa-clipboard btn-copy-icon"></i><span class="btn-copy-label">Copy Caption</span>
+              </button>
+            </div>
+          </div>
+        `;
+
+        const imgEl = card.querySelector("img");
+        imgEl.addEventListener("load", () => imgEl.classList.remove("opacity-0"));
+        attachImageFallback(imgEl, record.fileId, record.mediaType);
+        imgEl.addEventListener("click", () => openLightbox(record));
+
+        card.querySelector('[data-action="download"]').addEventListener("click", (e) => downloadFlyer(record, e.currentTarget));
+        card.querySelector('[data-action="copy"]').addEventListener("click", (e) => copyCaption(record.captionText, e.currentTarget));
+
+        container.appendChild(card);
+      });
+    }
+
+    function attachImageFallback(imgElement, fileId, mediaType) {
+      imgElement.dataset.fileId = fileId || "";
+      imgElement.dataset.mediaType = mediaType || "gambar";
+      imgElement.dataset.fallbackStage = "0";
+      imgElement.addEventListener("error", () => handleImageError(imgElement));
+    }
+
+    function handleImageError(imgElement) {
+      const stage = imgElement.dataset.fallbackStage || "0";
+      const fileId = imgElement.dataset.fileId;
+      const mediaType = imgElement.dataset.mediaType || "gambar";
+
+      if (stage === "0" && fileId) {
+        imgElement.dataset.fallbackStage = "1";
+        imgElement.src = `https://lh3.googleusercontent.com/d/${fileId}`;
+        return;
+      }
+      if (imgElement.dataset.fallbackStage !== "final") {
+        imgElement.dataset.fallbackStage = "final";
+        imgElement.src = mediaType === "video" ? FALLBACK_VIDEO_IMAGE : FALLBACK_IMAGE;
+        imgElement.classList.remove("opacity-0");
+      }
+    }
+
+    /* ==========================================================
+       3. NOMOR HP AGEN — SIMPAN DI BROWSER (localStorage), OPSIONAL
+    ========================================================== */
+    const AGENT_PHONE_KEY = "umrahPromoAgentPhone";
+    let phoneModalResolver = null;
+
+    function getSavedAgentPhone() {
+      try {
+        return localStorage.getItem(AGENT_PHONE_KEY) || "";
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function saveAgentPhone(phone) {
+      try {
+        localStorage.setItem(AGENT_PHONE_KEY, phone);
+      } catch (e) {
+        // Browser mungkin memblokir localStorage (mode incognito ketat, dsb) — abaikan.
+      }
+      updateAgentPhoneBadge();
+    }
+
+    function updateAgentPhoneBadge() {
+      const label = document.getElementById("agentPhoneLabel");
+      const phone = getSavedAgentPhone();
+      if (label) label.textContent = phone || "Atur No. HP";
+    }
+
+    function openPhoneModal() {
+      const modal = document.getElementById("phoneModal");
+      const input = document.getElementById("phoneInputField");
+      input.value = getSavedAgentPhone();
+      document.getElementById("phoneError").classList.add("hidden");
+      modal.classList.remove("hidden");
+      setTimeout(() => input.focus(), 50);
+
+      return new Promise((resolve, reject) => {
+        phoneModalResolver = { resolve, reject };
+      });
+    }
+
+    document.getElementById("agentPhoneBtn").addEventListener("click", () => {
+      openPhoneModal().catch(() => {});
+    });
+
+    document.getElementById("phoneCancelBtn").addEventListener("click", () => {
+      document.getElementById("phoneModal").classList.add("hidden");
+      if (phoneModalResolver) {
+        phoneModalResolver.reject(new Error("__PHONE_CANCELLED__"));
+        phoneModalResolver = null;
+      }
+    });
+
+    document.getElementById("phoneForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const raw = document.getElementById("phoneInputField").value.trim();
+      const errorEl = document.getElementById("phoneError");
+
+      if (raw) {
+        const digitsOnly = raw.replace(/[^0-9]/g, "");
+        if (digitsOnly.length < 8 || digitsOnly.length > 15) {
+          errorEl.textContent = "Masukkan nomor HP yang valid (8–15 digit angka), atau kosongkan untuk tidak menempelkan nomor.";
+          errorEl.classList.remove("hidden");
+          return;
+        }
+      }
+      errorEl.classList.add("hidden");
+
+      saveAgentPhone(raw);
+      document.getElementById("phoneModal").classList.add("hidden");
+      if (phoneModalResolver) {
+        phoneModalResolver.resolve(raw);
+        phoneModalResolver = null;
+      }
+    });
+
+    /* ==========================================================
+       4. LOGIKA DOWNLOAD FLYER GAMBAR (+ OVERLAY NOMOR HP OPSIONAL)
+          & DOWNLOAD VIDEO
+       ------------------------------------------------------------
+       Kalau item TIDAK butuh overlay (nomor HP tidak diisi/dinonaktifkan,
+       dan tidak sold out), file diunduh LANGSUNG dari Google Drive (tanpa
+       lewat Apps Script sama sekali) — nama file asli, jauh lebih cepat.
+       Video SELALU langsung dari Drive karena tidak pernah punya overlay.
+    ========================================================== */
+    function buildDriveDirectDownloadUrl_(fileId) {
+      return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+    }
+
+    function triggerDirectDriveDownload_(fileId) {
+      const directUrl = buildDriveDirectDownloadUrl_(fileId);
+      const tempAnchor = document.createElement("a");
+      tempAnchor.href = directUrl;
+      tempAnchor.rel = "noopener";
+      document.body.appendChild(tempAnchor);
+      tempAnchor.click();
+      document.body.removeChild(tempAnchor);
+    }
+
+    async function downloadFlyer(record, buttonEl) {
+      if (record.mediaType === "video") {
+        return downloadVideoFile(record, buttonEl);
+      }
+
+      const phoneNumber = getSavedAgentPhone();
+      const phoneWillBeAttached = !!phoneNumber && isPhoneOverlayEnabled(record);
+      const needsOverlay = !!record.isSoldOut || phoneWillBeAttached;
+
+      // --- KASUS TANPA OVERLAY: langsung dari Google Drive, nama file asli, super cepat ---
+      if (!needsOverlay) {
+        if (!record.fileId) {
+          showToast("File flyer tidak ditemukan di Google Drive.", "error");
+          return;
+        }
+        try {
+          triggerDirectDriveDownload_(record.fileId);
+          if (phoneNumber && !isPhoneOverlayEnabled(record)) {
+            showToast("Flyer berhasil diunduh langsung dari Google Drive! 📥 (Nomor HP dinonaktifkan admin untuk flyer ini.)", "success");
+          } else {
+            showToast("Flyer berhasil diunduh langsung dari Google Drive! 📥 (Atur nomor HP Anda lewat tombol \"No. HP\" agar otomatis ditempel lain kali.)", "success");
+          }
+        } catch (err) {
+          console.error("Download langsung dari Drive gagal:", err);
+          showToast("Gagal membuka unduhan dari Google Drive. Silakan coba lagi.", "error");
+        }
+        return;
+      }
+
+      // --- KASUS BUTUH OVERLAY (nomor HP dan/atau SOLD OUT): tetap lewat proses canvas ---
+      const originalContent = buttonEl.innerHTML;
+      try {
+        setButtonLoading(buttonEl, "Menyiapkan...");
+        showToast(`Flyer "${record.titlePaket}" sedang diproses...`, "info");
+
+        const finalBlob = await buildFlyerWithPhone(record, phoneNumber);
+        const objectUrl = URL.createObjectURL(finalBlob);
+
+        const extension = finalBlob.type === "image/png" ? "png" : "jpg";
+        const fileName = record.titlePaket.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-flyer." + extension;
+
+        const tempAnchor = document.createElement("a");
+        tempAnchor.href = objectUrl;
+        tempAnchor.download = fileName;
+        document.body.appendChild(tempAnchor);
+        tempAnchor.click();
+        document.body.removeChild(tempAnchor);
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+
+        let successMessage;
+        if (record.isSoldOut && phoneWillBeAttached) {
+          successMessage = "Flyer (bertanda SOLD OUT) dengan nomor HP Anda berhasil diunduh! 📥";
+        } else if (record.isSoldOut) {
+          successMessage = "Flyer bertanda SOLD OUT berhasil diunduh! 📥";
+        } else {
+          successMessage = "Flyer dengan nomor HP Anda berhasil diunduh! 📥";
+        }
+        showToast(successMessage, "success");
+      } catch (err) {
+        console.error("Download error:", err);
+        showToast(err.message || "Gagal mengunduh flyer. Silakan coba lagi.", "error");
+      } finally {
+        buttonEl.innerHTML = originalContent;
+      }
+    }
+
+    function downloadVideoFile(record, buttonEl) {
+      // Video TIDAK PERNAH punya overlay -> selalu langsung dari Google Drive,
+      // nama file asli, kualitas asli, dan tidak lewat Apps Script sama sekali.
+      if (!record.fileId) {
+        showToast("File video tidak ditemukan di Google Drive.", "error");
+        return;
+      }
+      try {
+        triggerDirectDriveDownload_(record.fileId);
+        showToast("Video sedang diunduh langsung dari Google Drive 📥", "success");
+      } catch (err) {
+        console.error("Download video langsung dari Drive gagal:", err);
+        showToast("Gagal membuka unduhan video dari Google Drive. Silakan coba lagi.", "error");
+      }
+    }
+
+    function setButtonLoading(buttonEl, label) {
+      buttonEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>${label}</span>`;
+    }
+
+    function base64ToBlob(base64, mimeType) {
+      const byteChars = atob(base64);
+      const byteNumbers = new Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+      return new Blob([new Uint8Array(byteNumbers)], { type: mimeType });
+    }
+
+    function loadImageFromBlob(blob) {
+      return new Promise((resolve, reject) => {
+        const objectUrl = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => resolve({ img, objectUrl });
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error("Gagal memuat gambar flyer untuk diproses."));
+        };
+        img.src = objectUrl;
+      });
+    }
+
+    async function buildFlyerWithPhone(record, phoneNumber) {
+      let sourceBlob;
+      if (record.fileId) {
+        const fileData = await runServer("getFileBase64", record.fileId);
+        sourceBlob = base64ToBlob(fileData.base64, fileData.mimeType);
+      } else {
+        const response = await fetch(record.imageUrl);
+        if (!response.ok) throw new Error("Gagal mengambil gambar flyer.");
+        sourceBlob = await response.blob();
+      }
+
+      const cleanPhone = (phoneNumber || "").trim();
+      const isSoldOut = !!record.isSoldOut;
+      const shouldDrawPhone = !!cleanPhone && isPhoneOverlayEnabled(record);
+
+      if (!shouldDrawPhone && !isSoldOut) {
+        return sourceBlob;
+      }
+
+      const { img, objectUrl } = await loadImageFromBlob(sourceBlob);
+
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        if (shouldDrawPhone) {
+          const overlay = record.phoneOverlay || { x: 10, y: 87, sizePct: 3, color: "#FFFFFF" };
+          const fontSizePx = Math.max(8, Math.round((overlay.sizePct / 100) * canvas.width));
+          const posX = (overlay.x / 100) * canvas.width;
+          const posY = (overlay.y / 100) * canvas.height;
+
+          await ensurePhoneFontLoaded();
+
+          ctx.font = `700 ${fontSizePx}px "Poppins", Arial, sans-serif`;
+          ctx.textBaseline = "middle";
+          ctx.textAlign = "left";
+          ctx.fillStyle = overlay.color || "#FFFFFF";
+          ctx.fillText(cleanPhone, posX, posY);
+        }
+
+        if (isSoldOut) {
+          await ensureSoldOutFontLoaded();
+          drawSoldOutStamp(ctx, canvas.width, canvas.height);
+        }
+
+        const sourceMime = sourceBlob.type || "image/jpeg";
+        const outputMime = sourceMime === "image/png" ? "image/png" : "image/jpeg";
+        const outputQuality = outputMime === "image/jpeg" ? 0.97 : undefined;
+
+        return await new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error("Gagal memproses gambar flyer."));
+            },
+            outputMime,
+            outputQuality
+          );
+        });
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+
+    async function ensurePhoneFontLoaded() {
+      try {
+        if (document.fonts && document.fonts.load) {
+          await document.fonts.load('700 100px "Poppins"');
+        }
+      } catch (e) {
+        // lanjutkan saja
+      }
+    }
+
+    async function ensureSoldOutFontLoaded() {
+      try {
+        if (document.fonts && document.fonts.load) {
+          await document.fonts.load('700 100px "Reem Kufi"');
+        }
+      } catch (e) {
+        // lanjutkan saja
+      }
+    }
+
+    function drawSoldOutStamp(ctx, width, height) {
+      ctx.save();
+
+      ctx.fillStyle = "rgba(8, 41, 31, 0.45)";
+      ctx.fillRect(0, 0, width, height);
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const angleRad = (-8 * Math.PI) / 180;
+      const fontSizePx = Math.max(18, Math.round(width * 0.085));
+
+      ctx.translate(centerX, centerY);
+      ctx.rotate(angleRad);
+
+      ctx.font = `700 ${fontSizePx}px "Reem Kufi", Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      const label = "SOLD OUT";
+      const textWidth = ctx.measureText(label).width;
+      const paddingX = fontSizePx * 0.95;
+      const paddingY = fontSizePx * 0.55;
+      const bannerWidth = textWidth + paddingX * 2;
+      const bannerHeight = fontSizePx + paddingY * 2;
+
+      ctx.fillStyle = "#C0392B";
+      ctx.fillRect(-bannerWidth / 2, -bannerHeight / 2, bannerWidth, bannerHeight);
+      ctx.lineWidth = Math.max(2, fontSizePx * 0.07);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.strokeRect(-bannerWidth / 2, -bannerHeight / 2, bannerWidth, bannerHeight);
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillText(label, 0, fontSizePx * 0.04);
+
+      ctx.restore();
+    }
+
+    /* ==========================================================
+       5. LOGIKA COPY CAPTION
+    ========================================================== */
+    async function copyCaption(captionText, buttonEl) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(captionText);
+          showCopiedFeedback(buttonEl);
+          showToast("Caption berhasil disalin! ✅", "success");
+          return;
+        }
+        throw new Error("Clipboard API tidak tersedia.");
+      } catch (err) {
+        console.warn("Clipboard API gagal, mencoba fallback execCommand:", err);
+        const fallbackSuccess = copyCaptionFallback(captionText);
+        if (fallbackSuccess) {
+          showCopiedFeedback(buttonEl);
+          showToast("Caption berhasil disalin! ✅", "success");
+        } else {
+          console.error("Fallback copy juga gagal.");
+          showToast("Gagal menyalin otomatis. Caption ditampilkan, silakan salin manual.", "error");
+          promptManualCopy(captionText);
+        }
+      }
+    }
+
+    function copyCaptionFallback(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.top = "0";
+      textarea.style.left = "0";
+      textarea.style.width = "1px";
+      textarea.style.height = "1px";
+      textarea.style.padding = "0";
+      textarea.style.border = "none";
+      textarea.style.outline = "none";
+      textarea.style.boxShadow = "none";
+      textarea.style.background = "transparent";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+
+      textarea.focus();
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+
+      let success = false;
+      try {
+        success = document.execCommand("copy");
+      } catch (err) {
+        success = false;
+      }
+
+      document.body.removeChild(textarea);
+      return success;
+    }
+
+    function promptManualCopy(text) {
+      window.prompt("Salin caption di bawah ini secara manual (Ctrl+C / tekan lama lalu Copy):", text);
+    }
+
+    function showCopiedFeedback(buttonEl) {
+      const icon = buttonEl.querySelector(".btn-copy-icon");
+      const label = buttonEl.querySelector(".btn-copy-label");
+      if (!icon || !label) return;
+
+      clearTimeout(buttonEl._resetTimer);
+      icon.className = "fa-solid fa-check btn-copy-icon";
+      label.textContent = "Tersalin!";
+      buttonEl.classList.add("bg-gold-500", "text-emerald-950");
+
+      buttonEl._resetTimer = setTimeout(() => {
+        icon.className = "fa-regular fa-clipboard btn-copy-icon";
+        label.textContent = "Copy Caption";
+        buttonEl.classList.remove("bg-gold-500", "text-emerald-950");
+      }, 2000);
+    }
+
+    /* ==========================================================
+       6. TOAST NOTIFICATION
+    ========================================================== */
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toastContainer");
+      const palette = {
+        success: { bg: "bg-emerald-800", icon: "fa-circle-check" },
+        error: { bg: "bg-red-700", icon: "fa-circle-exclamation" },
+        info: { bg: "bg-emerald-900", icon: "fa-circle-info" },
+      };
+      const style = palette[type] || palette.success;
+
+      const toast = document.createElement("div");
+      toast.className = `toast-enter pointer-events-auto flex items-center gap-2 ${style.bg} text-white text-sm font-medium px-4 py-2.5 rounded-full shadow-lg border border-gold-400/40`;
+      toast.innerHTML = `<i class="fa-solid ${style.icon} text-gold-300"></i><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove("toast-enter");
+        toast.classList.add("toast-exit");
+        toast.addEventListener("animationend", () => toast.remove(), { once: true });
+      }, 2600);
+    }
+
+    /* ==========================================================
+       7. MODAL PREVIEW / ZOOM FLYER & PEMUTAR VIDEO (LIGHTBOX)
+    ========================================================== */
+    function openLightbox(record) {
+      lightboxRecord = record;
+      const modal = document.getElementById("lightboxModal");
+      const img = document.getElementById("lightboxImg");
+      const videoWrap = document.getElementById("lightboxVideoWrap");
+      const videoFrame = document.getElementById("lightboxVideoFrame");
+      const videoFallback = document.getElementById("lightboxVideoFallback");
+      const title = document.getElementById("lightboxTitle");
+      const subtitle = document.getElementById("lightboxSubtitle");
+      const downloadBtn = document.getElementById("lightboxDownloadBtn");
+      const openNewTabBtn = document.getElementById("lightboxOpenNewTabBtn");
+
+      title.textContent = record.titlePaket || (record.mediaType === "video" ? "Preview Video" : "Preview Flyer");
+
+      if (record.mediaType === "video") {
+        img.classList.add("hidden");
+        img.src = "";
+        videoFrame.src = record.videoEmbedUrl || "";
+        videoWrap.classList.remove("hidden");
+        videoWrap.classList.add("flex");
+        videoFallback.classList.remove("hidden");
+        videoFallback.classList.add("flex");
+        subtitle.textContent = "Gunakan kontrol pemutar video di bawah untuk memutar/menjeda.";
+
+        if (record.videoViewUrl) {
+          openNewTabBtn.classList.remove("hidden");
+          openNewTabBtn.onclick = () => window.open(record.videoViewUrl, "_blank");
+        } else {
+          openNewTabBtn.classList.add("hidden");
+          openNewTabBtn.onclick = null;
+        }
+
+        const fallbackBtn = document.getElementById("lightboxVideoFallbackBtn");
+        fallbackBtn.onclick = () => {
+          if (record.videoViewUrl) window.open(record.videoViewUrl, "_blank");
+        };
+      } else {
+        videoWrap.classList.add("hidden");
+        videoWrap.classList.remove("flex");
+        videoFrame.classList.add("hidden");
+        videoFrame.src = "";
+        videoFallback.classList.add("hidden");
+        videoFallback.classList.remove("flex");
+        openNewTabBtn.classList.add("hidden");
+        openNewTabBtn.onclick = null;
+        img.classList.remove("hidden");
+        img.src = record.imageUrl;
+        img.dataset.fileId = record.fileId || "";
+        img.dataset.mediaType = record.mediaType || "gambar";
+        img.dataset.fallbackStage = "0";
+        img.classList.remove("zoomed");
+        img.style.transform = "scale(1)";
+        subtitle.textContent = "Klik gambar untuk zoom in/out · geser untuk melihat detail";
+      }
+
+      downloadBtn.onclick = () => downloadFlyer(record, downloadBtn);
+
+      modal.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeLightbox() {
+      const modal = document.getElementById("lightboxModal");
+      const img = document.getElementById("lightboxImg");
+      const videoWrap = document.getElementById("lightboxVideoWrap");
+      const videoFrame = document.getElementById("lightboxVideoFrame");
+      const videoFallback = document.getElementById("lightboxVideoFallback");
+      modal.classList.add("hidden");
+      img.classList.remove("zoomed");
+      img.style.transform = "scale(1)";
+      videoFrame.src = "";
+      videoFrame.classList.add("hidden");
+      videoWrap.classList.add("hidden");
+      videoWrap.classList.remove("flex");
+      videoFallback.classList.add("hidden");
+      videoFallback.classList.remove("flex");
+      document.body.style.overflow = "";
+      lightboxRecord = null;
+    }
+
+    function toggleLightboxZoom(e) {
+      if (lightboxRecord && lightboxRecord.mediaType === "video") return;
+
+      const img = document.getElementById("lightboxImg");
+      const isZoomed = img.classList.contains("zoomed");
+
+      if (isZoomed) {
+        img.classList.remove("zoomed");
+        img.style.transform = "scale(1)";
+      } else {
+        img.classList.add("zoomed");
+        img.style.transform = "scale(2.2)";
+        const wrap = document.getElementById("lightboxImgWrap");
+        requestAnimationFrame(() => {
+          const rect = img.getBoundingClientRect();
+          const clickX = e ? e.clientX - rect.left : rect.width / 2;
+          const clickY = e ? e.clientY - rect.top : rect.height / 2;
+          wrap.scrollLeft = clickX * 1.2 - wrap.clientWidth / 2;
+          wrap.scrollTop = clickY * 1.2 - wrap.clientHeight / 2;
+        });
+      }
+    }
+
+    document.getElementById("lightboxImg").addEventListener("click", (e) => toggleLightboxZoom(e));
+    document.getElementById("lightboxImg").addEventListener("error", function () {
+      handleImageError(this);
+    });
+    document.getElementById("lightboxCloseBtn").addEventListener("click", closeLightbox);
+
+    document.getElementById("lightboxModal").addEventListener("click", (e) => {
+      if (e.target.id === "lightboxModal" || e.target.id === "lightboxImgWrap") {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (!document.getElementById("lightboxModal").classList.contains("hidden")) {
+        closeLightbox();
+      }
+    });
+
+    /* ==========================================================
+       8. TAB NAVIGATION — GALERI PUBLIK
+    ========================================================== */
+    function switchTab(tab) {
+      if (tab !== "promosi" && tab !== "paket" && tab !== "video") return;
+      if (tab === currentTab) return;
+      currentTab = tab;
+
+      document.getElementById("tabBtnPromosi").dataset.active = String(tab === "promosi");
+      document.getElementById("tabBtnPaket").dataset.active = String(tab === "paket");
+      document.getElementById("tabBtnVideo").dataset.active = String(tab === "video");
+
+      applyTabAndRenderGallery();
+    }
+
+    function renderTabCounts() {
+      const countPaket = allPromoData.filter((d) => (d.tabType || "paket") === "paket").length;
+      const countPromosi = allPromoData.filter((d) => d.tabType === "promosi").length;
+      const countVideo = allPromoData.filter((d) => d.tabType === "video").length;
+      document.querySelector('#tabBtnPaket span:last-child').textContent = `Flyer Paket (${countPaket})`;
+      document.querySelector('#tabBtnPromosi span:last-child').textContent = `Flyer Konten (${countPromosi})`;
+      document.querySelector('#tabBtnVideo span:last-child').textContent = `Video Konten (${countVideo})`;
+    }
+
+    document.getElementById("tabBtnPromosi").addEventListener("click", () => switchTab("promosi"));
+    document.getElementById("tabBtnPaket").addEventListener("click", () => switchTab("paket"));
+    document.getElementById("tabBtnVideo").addEventListener("click", () => switchTab("video"));
+
+    /* ==========================================================
+       9. LOGO HEADER — FALLBACK BERTINGKAT
+    ========================================================== */
+    function handleLogoError(imgElement) {
+      const stage = imgElement.dataset.fallbackStage || "0";
+      const fileId = "10b9HsU9mVgsoVirI2bzzX1jlJhkaj6GZ";
+
+      if (stage === "0") {
+        imgElement.dataset.fallbackStage = "1";
+        imgElement.src = `https://lh3.googleusercontent.com/d/${fileId}`;
+        return;
+      }
+      const wrap = imgElement.parentElement;
+      wrap.innerHTML = '<i class="fa-solid fa-star-and-crescent text-gold-400 text-lg"></i>';
+    }
+
+    /* ==========================================================
+       10. INISIALISASI APLIKASI
+    ========================================================== */
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("currentYear").textContent = new Date().getFullYear();
+      updateAgentPhoneBadge();
+
+      const logoImg = document.getElementById("logoImg");
+      if (logoImg) {
+        logoImg.addEventListener("error", () => handleLogoError(logoImg));
+      }
+
+      loadGallery();
+
+      // === TAMBAHAN BARU ===
+      // Tampilkan popup "Atur Nomor HP Anda" secara OTOMATIS setiap kali
+      // webapp ini dibuka/di-refresh — sama seperti saat tombol "No. HP"
+      // di header ditekan manual. Nilai input akan otomatis terisi jika
+      // sebelumnya pengguna sudah pernah menyimpan nomornya (localStorage).
+      openPhoneModal().catch(() => {
+        // Sengaja dibiarkan kosong: jika pengguna menekan "Batal", promise
+        // ini di-reject secara internal — bukan error sungguhan, jadi
+        // cukup diabaikan supaya tidak muncul di console.
+      });
+    });
+  </script>
+</body>
+</html>
