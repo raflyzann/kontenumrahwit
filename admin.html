@@ -101,6 +101,13 @@
       max-height: 14rem;
       overflow-y: auto;
     }
+
+    /* --- Pesan recovery/warning setelah error submit (BARU) --- */
+    .recovery-note {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      color: #92400E;
+    }
   </style>
 </head>
 
@@ -170,6 +177,7 @@
         <h3 class="font-semibold text-emerald-900 mb-4">Tambah Paket / Video Baru</h3>
 
         <ul id="formErrors" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-3 list-disc list-inside space-y-0.5"></ul>
+        <div id="formRecoveryNote" class="hidden mb-4 recovery-note text-sm rounded-xl p-3"></div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
@@ -314,6 +322,7 @@
       <form id="editForm" novalidate>
         <input type="hidden" id="editRecordId" />
         <ul id="editFormErrors" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-3 list-disc list-inside space-y-0.5"></ul>
+        <div id="editRecoveryNote" class="hidden mb-4 recovery-note text-sm rounded-xl p-3"></div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
@@ -510,6 +519,12 @@
     let dragState = { draggedId: null }; // state drag-and-drop urutan paket admin
     let currentAdminTabFilter = "__all__";
 
+    // BARU: penanda "sedang mengirim data" untuk form tambah & edit — dipakai
+    // untuk mengunci field selama submit berlangsung dan memperingatkan
+    // sebelum tab ditutup/di-refresh di tengah proses (lihat bagian 13).
+    let isSubmittingPromoForm = false;
+    let isSubmittingEditForm = false;
+
     const ALLOWED_IMAGE_MIME_TYPES = ["image/jpeg", "image/png"];
     const ALLOWED_VIDEO_MIME_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
     const MAX_IMAGE_SIZE_MB = 10;
@@ -667,6 +682,16 @@
       const div = document.createElement("div");
       div.textContent = str == null ? "" : String(str);
       return div.innerHTML;
+    }
+
+    /* BARU: generator ID unik untuk idempotency key (clientRequestId).
+       Pakai crypto.randomUUID() kalau tersedia (browser modern/HTTPS),
+       fallback sederhana kalau tidak (mis. dibuka lewat http:// biasa). */
+    function generateClientRequestId_() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+      return "creq-" + Date.now() + "-" + Math.random().toString(16).slice(2);
     }
 
     function isPhoneOverlayEnabled(record) {
@@ -1026,12 +1051,31 @@
       });
     }
 
+    /* BARU: kunci/lepas seluruh field form tambah paket selama proses
+       submit berlangsung, supaya admin tidak bisa mengubah data lalu klik
+       submit lagi di tengah proses (yang bisa memicu dua request beririsan). */
+    function setPromoFormFieldsDisabled(disabled) {
+      const ids = ["inputNamaPaket", "inputTabType", "inputKategori", "inputKategoriLainnya", "inputFlyerFile", "inputCaption"];
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = disabled;
+      });
+      // Trigger kustom dropdown (kalau ada) supaya tampil non-aktif juga
+      document.querySelectorAll("#promoForm .custom-dropdown-trigger").forEach((btn) => {
+        btn.disabled = disabled;
+        btn.classList.toggle("opacity-50", disabled);
+        btn.classList.toggle("pointer-events-none", disabled);
+      });
+    }
+
     function resetPromoForm() {
       document.getElementById("promoForm").reset();
       document.getElementById("kategoriLainnyaWrap").classList.add("hidden");
       document.getElementById("flyerPreview").classList.add("hidden");
       document.getElementById("flyerPreview").innerHTML = "";
       document.getElementById("formErrors").classList.add("hidden");
+      document.getElementById("formRecoveryNote").classList.add("hidden");
+      document.getElementById("formRecoveryNote").innerHTML = "";
       setSelectValue("inputTabType", "paket");
       setSelectValue("inputKategori", "");
       applyMediaAcceptForTabType(
@@ -1040,11 +1084,32 @@
         document.getElementById("inputFlyerFileLabel"),
         document.getElementById("inputFlyerHint")
       );
+      // Idempotency key HANYA dihapus saat form benar-benar direset setelah
+      // sukses — supaya kalau admin retry manual, ID yang sama tetap dipakai.
+      delete document.getElementById("promoForm").dataset.pendingRequestId;
+    }
+
+    /* BARU: dipanggil setelah sebuah submit ke addPromoPaket GAGAL di sisi
+       client. Mengecek ke server (lewat findByClientRequestId) apakah
+       request itu SEBENARNYA sudah berhasil diproses walau response-nya
+       tidak sampai ke browser. Mengembalikan record kalau ditemukan, atau
+       null kalau tidak (baik karena memang belum tersimpan, atau karena
+       recheck itu sendiri gagal — mis. masih offline). */
+    async function tryRecoverAfterFailedSubmit_(clientRequestId) {
+      if (!clientRequestId) return null;
+      try {
+        const found = await runServer("findByClientRequestId", clientRequestId, adminPin);
+        return found || null;
+      } catch (recheckErr) {
+        console.warn("Gagal melakukan pengecekan ulang (recovery):", recheckErr);
+        return null;
+      }
     }
 
     document.getElementById("promoForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const errorBox = document.getElementById("formErrors");
+      const recoveryBox = document.getElementById("formRecoveryNote");
       const errors = [];
 
       const namaPaket = document.getElementById("inputNamaPaket").value.trim();
@@ -1074,14 +1139,30 @@
       if (errors.length > 0) {
         errorBox.innerHTML = errors.map((msg) => `<li>${escapeHtml(msg)}</li>`).join("");
         errorBox.classList.remove("hidden");
+        recoveryBox.classList.add("hidden");
         return;
       }
       errorBox.classList.add("hidden");
+      recoveryBox.classList.add("hidden");
+      recoveryBox.innerHTML = "";
+
+      // BARU: idempotency key — dibuat SEKALI per upaya, dan TETAP SAMA
+      // selama form belum sukses/di-reset. Ini yang membuat retry (baik
+      // manual oleh admin, maupun otomatis di masa depan) tidak membuat
+      // data dobel, karena backend akan mengenali ID yang sama.
+      const formEl = document.getElementById("promoForm");
+      let clientRequestId = formEl.dataset.pendingRequestId;
+      if (!clientRequestId) {
+        clientRequestId = generateClientRequestId_();
+        formEl.dataset.pendingRequestId = clientRequestId;
+      }
 
       const submitBtn = document.getElementById("btnSubmitPaket");
       const originalContent = submitBtn.innerHTML;
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Mengunggah &amp; menyimpan… (bisa 10–30 detik untuk file besar)</span>';
+      setPromoFormFieldsDisabled(true);
+      isSubmittingPromoForm = true;
 
       try {
         const imageBase64 = await fileToBase64(file);
@@ -1089,6 +1170,7 @@
           namaPaket, kategori, caption, tabType, mediaType,
           imageBase64, mimeType: file.type, fileName: file.name,
           pin: adminPin,
+          clientRequestId,
         });
 
         allPromoData.unshift(newRecord);
@@ -1102,11 +1184,42 @@
         );
       } catch (err) {
         console.error("Gagal menyimpan paket:", err);
-        errorBox.innerHTML = `<li>${escapeHtml(err.message || "Gagal menyimpan data ke server.")}</li>`;
-        errorBox.classList.remove("hidden");
+
+        // BARU: sebelum menyerah, cek dulu apakah sebenarnya sudah
+        // tersimpan di server (kasus response gagal sampai ke browser
+        // padahal server sudah selesai memproses).
+        const recovered = await tryRecoverAfterFailedSubmit_(clientRequestId);
+
+        if (recovered) {
+          const alreadyInList = allPromoData.some((d) => d.id === recovered.id);
+          if (!alreadyInList) {
+            allPromoData.unshift(recovered);
+            renderAdminList(allPromoData);
+          }
+          resetPromoForm();
+          showToast("Paket berhasil tersimpan — sempat ada gangguan koneksi saat konfirmasi, tapi datanya aman. ✅", "success");
+        } else {
+          errorBox.innerHTML = `<li>${escapeHtml(err.message || "Gagal menyimpan data ke server.")}</li>`;
+          errorBox.classList.remove("hidden");
+          recoveryBox.innerHTML = `
+            Koneksi sempat bermasalah saat menyimpan, dan kami belum bisa memastikan apakah data ini sudah tersimpan atau belum.
+            <button type="button" id="btnRecheckAfterError" class="underline font-semibold ml-1">Muat ulang daftar</button>
+            untuk memeriksa sebelum submit ulang, agar tidak tersimpan dua kali.
+          `;
+          recoveryBox.classList.remove("hidden");
+          const recheckBtn = document.getElementById("btnRecheckAfterError");
+          if (recheckBtn) {
+            recheckBtn.addEventListener("click", async () => {
+              await loadAdminData();
+              showToast("Daftar sudah dimuat ulang — silakan periksa sebelum submit ulang.", "info");
+            });
+          }
+        }
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalContent;
+        setPromoFormFieldsDisabled(false);
+        isSubmittingPromoForm = false;
       }
     });
 
@@ -1412,6 +1525,15 @@
       }
 
       document.getElementById("editFormErrors").classList.add("hidden");
+      document.getElementById("editRecoveryNote").classList.add("hidden");
+      document.getElementById("editRecoveryNote").innerHTML = "";
+      // BARU: idempotency key untuk sesi edit ITEM INI — disimpan per-record
+      // (bukan cuma per-form) supaya kalau admin membuka form edit untuk
+      // item lain di antara percobaan, tidak tertukar ID-nya.
+      const editFormEl = document.getElementById("editForm");
+      delete editFormEl.dataset.pendingRequestId;
+      editFormEl.dataset.pendingRequestForId = record.id;
+
       document.getElementById("editModal").classList.remove("hidden");
     }
 
@@ -1469,9 +1591,24 @@
       }
     });
 
+    /* BARU: kunci/lepas field form edit selama proses submit berlangsung. */
+    function setEditFormFieldsDisabled(disabled) {
+      const ids = ["editNamaPaket", "editTabType", "editKategori", "editKategoriLainnya", "editFlyerFile", "editCaption", "editSoldOut"];
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = disabled;
+      });
+      document.querySelectorAll("#editForm .custom-dropdown-trigger").forEach((btn) => {
+        btn.disabled = disabled;
+        btn.classList.toggle("opacity-50", disabled);
+        btn.classList.toggle("pointer-events-none", disabled);
+      });
+    }
+
     document.getElementById("editForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const errorBox = document.getElementById("editFormErrors");
+      const recoveryBox = document.getElementById("editRecoveryNote");
       const errors = [];
 
       const id = document.getElementById("editRecordId").value;
@@ -1514,17 +1651,31 @@
       if (errors.length > 0) {
         errorBox.innerHTML = errors.map((msg) => `<li>${escapeHtml(msg)}</li>`).join("");
         errorBox.classList.remove("hidden");
+        recoveryBox.classList.add("hidden");
         return;
       }
       errorBox.classList.add("hidden");
+      recoveryBox.classList.add("hidden");
+      recoveryBox.innerHTML = "";
+
+      // BARU: idempotency key untuk submit edit ini. Sama seperti form
+      // tambah — dibuat sekali per upaya, dipertahankan sampai sukses.
+      const editFormEl = document.getElementById("editForm");
+      let clientRequestId = editFormEl.dataset.pendingRequestId;
+      if (!clientRequestId) {
+        clientRequestId = generateClientRequestId_();
+        editFormEl.dataset.pendingRequestId = clientRequestId;
+      }
 
       const submitBtn = document.getElementById("editSubmitBtn");
       const originalContent = submitBtn.innerHTML;
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan… (bisa lebih lama jika mengganti file)</span>';
+      setEditFormFieldsDisabled(true);
+      isSubmittingEditForm = true;
 
       try {
-        const payload = { id, namaPaket, kategori, caption, soldOut, tabType, mediaType, pin: adminPin };
+        const payload = { id, namaPaket, kategori, caption, soldOut, tabType, mediaType, pin: adminPin, clientRequestId };
         if (file) {
           payload.imageBase64 = await fileToBase64(file);
           payload.mimeType = file.type;
@@ -1538,15 +1689,47 @@
         }
 
         renderAdminList(allPromoData);
+        delete editFormEl.dataset.pendingRequestId;
         closeEditModal();
         showToast("Item berhasil diperbarui! ✏️", "success");
       } catch (err) {
         console.error("Gagal memperbarui item:", err);
-        errorBox.innerHTML = `<li>${escapeHtml(err.message || "Gagal menyimpan perubahan ke server.")}</li>`;
-        errorBox.classList.remove("hidden");
+
+        // BARU: sama seperti form tambah — cek dulu ke server sebelum
+        // menampilkan error mentah ke admin.
+        const recovered = await tryRecoverAfterFailedSubmit_(clientRequestId);
+
+        if (recovered) {
+          const index = allPromoData.findIndex((d) => d.id === id);
+          if (index !== -1) {
+            allPromoData[index] = Object.assign({}, allPromoData[index], recovered);
+          }
+          renderAdminList(allPromoData);
+          delete editFormEl.dataset.pendingRequestId;
+          closeEditModal();
+          showToast("Perubahan berhasil tersimpan — sempat ada gangguan koneksi saat konfirmasi, tapi datanya aman. ✅", "success");
+        } else {
+          errorBox.innerHTML = `<li>${escapeHtml(err.message || "Gagal menyimpan perubahan ke server.")}</li>`;
+          errorBox.classList.remove("hidden");
+          recoveryBox.innerHTML = `
+            Koneksi sempat bermasalah saat menyimpan, dan kami belum bisa memastikan apakah perubahan ini sudah tersimpan.
+            <button type="button" id="btnRecheckEditAfterError" class="underline font-semibold ml-1">Muat ulang daftar</button>
+            untuk memeriksa sebelum submit ulang.
+          `;
+          recoveryBox.classList.remove("hidden");
+          const recheckBtn = document.getElementById("btnRecheckEditAfterError");
+          if (recheckBtn) {
+            recheckBtn.addEventListener("click", async () => {
+              await loadAdminData();
+              showToast("Daftar sudah dimuat ulang — silakan periksa sebelum submit ulang.", "info");
+            });
+          }
+        }
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalContent;
+        setEditFormFieldsDisabled(false);
+        isSubmittingEditForm = false;
       }
     });
 
@@ -1800,6 +1983,22 @@
       // Panel admin selalu meminta login saat halaman ini dibuka —
       // tidak ada sesi yang disimpan/di-cache di browser.
       openPinModal();
+    });
+
+    /* ==========================================================
+       13. PROTEKSI TUTUP/REFRESH TAB SAAT SUBMIT SEDANG BERLANGSUNG (BARU)
+       ------------------------------------------------------------
+       Mencegah admin menutup/me-refresh tab di tengah proses upload
+       (yang bisa memicu kesan "gagal" padahal proses masih berjalan di
+       server). Peringatan native browser ini tidak bisa dikustomisasi
+       teksnya, tapi cukup untuk membuat admin berpikir dua kali.
+    ========================================================== */
+    window.addEventListener("beforeunload", (e) => {
+      if (isSubmittingPromoForm || isSubmittingEditForm) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
     });
   </script>
 </body>
