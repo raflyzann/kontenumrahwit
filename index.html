@@ -302,6 +302,9 @@
         <button type="button" id="lightboxOpenNewTabBtn" class="hidden inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition-colors duration-200">
           <i class="fa-solid fa-up-right-from-square"></i><span class="hidden sm:inline">Buka di Tab Baru</span>
         </button>
+        <button type="button" id="lightboxShareBtn" class="hidden sm:inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition-colors duration-200">
+          <i class="fa-solid fa-share-nodes"></i><span>Bagikan</span>
+        </button>
         <button type="button" id="lightboxDownloadBtn" class="hidden sm:inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-600 text-emerald-950 text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition-colors duration-200">
           <i class="fa-solid fa-arrow-down-to-line"></i><span>Download</span>
         </button>
@@ -333,6 +336,57 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ========================================================
+       POPOVER: MENU BAGIKAN (share sheet native + WA/IG/FB)
+  ========================================================= -->
+  <div id="shareMenuOverlay" class="hidden fixed inset-0 z-[65]"></div>
+  <div id="shareMenuPanel" class="hidden fixed z-[66] w-72 max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-2xl border border-emerald-900/10 overflow-hidden">
+    <div class="px-4 pt-3 pb-2 border-b border-emerald-900/10">
+      <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700/70">Bagikan ke</p>
+    </div>
+
+    <button type="button" data-share-option="native" class="share-menu-item hidden w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-emerald-50 transition-colors duration-150">
+      <span class="w-9 h-9 rounded-full bg-emerald-800 text-white flex items-center justify-center shrink-0">
+        <i class="fa-solid fa-share-nodes"></i>
+      </span>
+      <span class="min-w-0">
+        <span class="block text-sm font-semibold text-emerald-900">Bagikan via Aplikasi...</span>
+        <span class="block text-xs text-emerald-700/60">Pilih langsung dari menu share HP Anda</span>
+      </span>
+    </button>
+    <div data-share-divider class="hidden border-t border-emerald-900/10"></div>
+
+    <button type="button" data-share-option="whatsapp" class="share-menu-item w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-emerald-50 transition-colors duration-150">
+      <span class="w-9 h-9 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0">
+        <i class="fa-brands fa-whatsapp"></i>
+      </span>
+      <span class="min-w-0">
+        <span class="block text-sm font-semibold text-emerald-900">WhatsApp</span>
+        <span class="block text-xs text-emerald-700/60">Caption otomatis terisi, file tinggal dilampirkan</span>
+      </span>
+    </button>
+
+    <button type="button" data-share-option="instagram" class="share-menu-item w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-emerald-50 transition-colors duration-150">
+      <span class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#FEDA75] via-[#D62976] to-[#4F5BD5] text-white flex items-center justify-center shrink-0">
+        <i class="fa-brands fa-instagram"></i>
+      </span>
+      <span class="min-w-0">
+        <span class="block text-sm font-semibold text-emerald-900">Instagram</span>
+        <span class="block text-xs text-emerald-700/60">File terunduh &amp; caption tersalin (tempel manual)</span>
+      </span>
+    </button>
+
+    <button type="button" data-share-option="facebook" class="share-menu-item w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-emerald-50 transition-colors duration-150">
+      <span class="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center shrink-0">
+        <i class="fa-brands fa-facebook-f"></i>
+      </span>
+      <span class="min-w-0">
+        <span class="block text-sm font-semibold text-emerald-900">Facebook</span>
+        <span class="block text-xs text-emerald-700/60">File terunduh &amp; caption tersalin (tempel manual)</span>
+      </span>
+    </button>
   </div>
 
   <div id="toastContainer" class="fixed bottom-6 left-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
@@ -572,8 +626,11 @@
               <button type="button" data-action="download" class="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-semibold px-3 py-2.5 rounded-xl transition-colors duration-200 active:scale-[0.98]">
                 <i class="fa-solid fa-arrow-down-to-line"></i><span>${isVideo ? "Download Video" : "Download JPG"}</span>
               </button>
-              <button type="button" data-action="copy" class="flex-1 inline-flex items-center justify-center gap-2 border-2 border-gold-500 text-emerald-900 hover:bg-gold-500 hover:text-emerald-950 text-sm font-semibold px-3 py-2.5 rounded-xl transition-colors duration-200 active:scale-[0.98]">
-                <i class="fa-regular fa-clipboard btn-copy-icon"></i><span class="btn-copy-label">Copy Caption</span>
+              <button type="button" data-action="copy" title="Copy Caption" aria-label="Copy Caption" class="shrink-0 w-11 h-11 inline-flex items-center justify-center border-2 border-gold-500 text-emerald-900 hover:bg-gold-500 hover:text-emerald-950 rounded-xl transition-colors duration-200 active:scale-[0.98]">
+                <i class="fa-regular fa-clipboard btn-copy-icon"></i>
+              </button>
+              <button type="button" data-action="share" title="Bagikan" aria-label="Bagikan" class="shrink-0 w-11 h-11 inline-flex items-center justify-center border-2 border-emerald-800 text-emerald-800 hover:bg-emerald-800 hover:text-white rounded-xl transition-colors duration-200 active:scale-[0.98]">
+                <i class="fa-solid fa-share-nodes"></i>
               </button>
             </div>
           </div>
@@ -586,6 +643,7 @@
 
         card.querySelector('[data-action="download"]').addEventListener("click", (e) => downloadFlyer(record, e.currentTarget));
         card.querySelector('[data-action="copy"]').addEventListener("click", (e) => copyCaption(record.captionText, e.currentTarget));
+        card.querySelector('[data-action="share"]').addEventListener("click", (e) => openShareMenu(record, e.currentTarget));
 
         container.appendChild(card);
       });
@@ -1010,17 +1068,19 @@
 
     function showCopiedFeedback(buttonEl) {
       const icon = buttonEl.querySelector(".btn-copy-icon");
-      const label = buttonEl.querySelector(".btn-copy-label");
-      if (!icon || !label) return;
+      if (!icon) return;
+
+      const originalTitle = buttonEl.dataset.originalTitle || buttonEl.getAttribute("title") || "Copy Caption";
+      buttonEl.dataset.originalTitle = originalTitle;
 
       clearTimeout(buttonEl._resetTimer);
       icon.className = "fa-solid fa-check btn-copy-icon";
-      label.textContent = "Tersalin!";
+      buttonEl.setAttribute("title", "Tersalin!");
       buttonEl.classList.add("bg-gold-500", "text-emerald-950");
 
       buttonEl._resetTimer = setTimeout(() => {
         icon.className = "fa-regular fa-clipboard btn-copy-icon";
-        label.textContent = "Copy Caption";
+        buttonEl.setAttribute("title", originalTitle);
         buttonEl.classList.remove("bg-gold-500", "text-emerald-950");
       }, 2000);
     }
@@ -1062,6 +1122,7 @@
       const title = document.getElementById("lightboxTitle");
       const subtitle = document.getElementById("lightboxSubtitle");
       const downloadBtn = document.getElementById("lightboxDownloadBtn");
+      const shareBtn = document.getElementById("lightboxShareBtn");
       const openNewTabBtn = document.getElementById("lightboxOpenNewTabBtn");
 
       title.textContent = record.titlePaket || (record.mediaType === "video" ? "Preview Video" : "Preview Flyer");
@@ -1108,12 +1169,14 @@
       }
 
       downloadBtn.onclick = () => downloadFlyer(record, downloadBtn);
+      shareBtn.onclick = (e) => openShareMenu(record, e.currentTarget);
 
       modal.classList.remove("hidden");
       document.body.style.overflow = "hidden";
     }
 
     function closeLightbox() {
+      closeShareMenu();
       const modal = document.getElementById("lightboxModal");
       const img = document.getElementById("lightboxImg");
       const videoWrap = document.getElementById("lightboxVideoWrap");
@@ -1169,6 +1232,10 @@
 
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
+      if (!document.getElementById("shareMenuPanel").classList.contains("hidden")) {
+        closeShareMenu();
+        return;
+      }
       if (!document.getElementById("lightboxModal").classList.contains("hidden")) {
         closeLightbox();
       }
@@ -1216,6 +1283,190 @@
       }
       const wrap = imgElement.parentElement;
       wrap.innerHTML = '<i class="fa-solid fa-star-and-crescent text-gold-400 text-lg"></i>';
+    }
+
+    /* ==========================================================
+       11. FITUR BAGIKAN — NATIVE SHARE SHEET + WA / IG / FB
+       ------------------------------------------------------------
+       - "Bagikan via Aplikasi..." pakai Web Share API (navigator.share)
+         dengan file gambar (hasil overlay nomor HP/SOLD OUT tetap ikut).
+         Hanya ditawarkan untuk item GAMBAR & jika browser mendukung
+         share file (umumnya HP Android/iOS, sebagian desktop Chrome/Edge).
+       - WhatsApp: file diunduh otomatis + WhatsApp dibuka dengan caption
+         sudah terisi di kolom teks, tinggal lampirkan filenya.
+       - Instagram & Facebook: TIDAK punya cara resmi menerima file+caption
+         langsung dari web pihak ketiga (ini batasan platform mereka, bukan
+         batasan aplikasi ini) -> file diunduh otomatis, caption disalin ke
+         clipboard, lalu situs terkait dibuka di tab baru untuk ditempel manual.
+    ========================================================== */
+    let shareMenuRecord = null;
+
+    function slugifyForFile_(str) {
+      return (str || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "file";
+    }
+
+    async function copyCaptionSilently_(text) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text || "");
+          return true;
+        }
+        throw new Error("Clipboard API tidak tersedia.");
+      } catch (err) {
+        return copyCaptionFallback(text || "");
+      }
+    }
+
+    // Mengunduh file record (gambar dgn overlay bila perlu, atau video langsung
+    // dari Drive) TANPA butuh tombol asli di layar -> dipakai oleh opsi share.
+    async function downloadForShare_(record) {
+      if (record.mediaType === "video") {
+        if (!record.fileId) throw new Error("File video tidak ditemukan di Google Drive.");
+        triggerDirectDriveDownload_(record.fileId);
+        return;
+      }
+      const dummyBtn = document.createElement("button");
+      await downloadFlyer(record, dummyBtn);
+    }
+
+    /* ---------- Popover menu: buka/tutup & posisi ---------- */
+
+    function openShareMenu(record, anchorEl) {
+      shareMenuRecord = record;
+      const overlay = document.getElementById("shareMenuOverlay");
+      const panel = document.getElementById("shareMenuPanel");
+      const nativeBtn = panel.querySelector('[data-share-option="native"]');
+      const nativeDivider = panel.querySelector("[data-share-divider]");
+
+      const showNative = record.mediaType !== "video" && typeof navigator.share === "function";
+      nativeBtn.classList.toggle("hidden", !showNative);
+      if (nativeDivider) nativeDivider.classList.toggle("hidden", !showNative);
+
+      overlay.classList.remove("hidden");
+      panel.classList.remove("hidden");
+      panel.classList.add("modal-in");
+
+      positionShareMenu_(anchorEl);
+    }
+
+    function positionShareMenu_(anchorEl) {
+      const panel = document.getElementById("shareMenuPanel");
+      const rect = anchorEl.getBoundingClientRect();
+      const panelWidth = panel.offsetWidth || 288;
+      const panelHeight = panel.offsetHeight || 260;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      let left = rect.right - panelWidth;
+      if (left < 12) left = 12;
+      if (left + panelWidth > viewportWidth - 12) left = viewportWidth - panelWidth - 12;
+
+      let top = rect.bottom + 8;
+      if (top + panelHeight > viewportHeight - 12) {
+        top = rect.top - panelHeight - 8;
+        if (top < 12) top = 12;
+      }
+
+      panel.style.left = `${left}px`;
+      panel.style.top = `${top}px`;
+    }
+
+    function closeShareMenu() {
+      document.getElementById("shareMenuOverlay").classList.add("hidden");
+      document.getElementById("shareMenuPanel").classList.add("hidden");
+      shareMenuRecord = null;
+    }
+
+    document.getElementById("shareMenuOverlay").addEventListener("click", closeShareMenu);
+    window.addEventListener("scroll", () => closeShareMenu(), true);
+    window.addEventListener("resize", () => closeShareMenu());
+
+    document.getElementById("shareMenuPanel").addEventListener("click", (e) => {
+      const optionBtn = e.target.closest("[data-share-option]");
+      if (!optionBtn || !shareMenuRecord) return;
+      const record = shareMenuRecord;
+      const option = optionBtn.dataset.shareOption;
+
+      if (option === "native") shareViaNativeSheet(record);
+      else if (option === "whatsapp") shareToWhatsApp(record);
+      else if (option === "instagram") shareToInstagram(record);
+      else if (option === "facebook") shareToFacebook(record);
+    });
+
+    /* ---------- Opsi 1: Share sheet native (Web Share API) ---------- */
+
+    async function shareViaNativeSheet(record) {
+      closeShareMenu();
+      try {
+        if (typeof navigator.share !== "function") {
+          throw new Error("Bagikan otomatis tidak didukung di browser ini.");
+        }
+
+        const phoneNumber = getSavedAgentPhone();
+        const blob = await buildFlyerWithPhone(record, phoneNumber);
+        const extension = blob.type === "image/png" ? "png" : "jpg";
+        const fileName = slugifyForFile_(record.titlePaket) + "-flyer." + extension;
+        const file = new File([blob], fileName, { type: blob.type });
+
+        if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+          throw new Error("Perangkat ini tidak mendukung berbagi gambar langsung.");
+        }
+
+        await navigator.share({ files: [file], title: record.titlePaket, text: record.captionText || "" });
+        showToast("Berhasil dibagikan! 📤", "success");
+      } catch (err) {
+        if (err && err.name === "AbortError") return; // dibatalkan user, bukan error
+        console.warn("Native share gagal/tidak didukung:", err);
+        showToast(
+          (err && err.message) || "Bagikan otomatis tidak didukung — coba opsi WhatsApp/Instagram/Facebook.",
+          "error"
+        );
+      }
+    }
+
+    /* ---------- Opsi 2: WhatsApp (file unduh + caption di URL wa.me) ---------- */
+
+    async function shareToWhatsApp(record) {
+      closeShareMenu();
+      try {
+        await downloadForShare_(record);
+        const encodedText = encodeURIComponent(record.captionText || "");
+        window.open(`https://wa.me/?text=${encodedText}`, "_blank", "noopener");
+        showToast("File sedang diunduh & WhatsApp dibuka dengan caption siap kirim — tinggal lampirkan filenya di chat. 📎", "info");
+      } catch (err) {
+        console.error("Share ke WhatsApp gagal:", err);
+        showToast(err.message || "Gagal menyiapkan bagikan ke WhatsApp.", "error");
+      }
+    }
+
+    /* ---------- Opsi 3: Instagram (file unduh + caption disalin) ---------- */
+
+    async function shareToInstagram(record) {
+      closeShareMenu();
+      try {
+        await downloadForShare_(record);
+        await copyCaptionSilently_(record.captionText);
+        window.open("https://www.instagram.com/", "_blank", "noopener");
+        showToast("File terunduh & caption tersalin — tinggal upload lalu tempel (Ctrl+V) captionnya di Instagram. 📋", "info");
+      } catch (err) {
+        console.error("Share ke Instagram gagal:", err);
+        showToast(err.message || "Gagal menyiapkan bagikan ke Instagram.", "error");
+      }
+    }
+
+    /* ---------- Opsi 4: Facebook (file unduh + caption disalin) ---------- */
+
+    async function shareToFacebook(record) {
+      closeShareMenu();
+      try {
+        await downloadForShare_(record);
+        await copyCaptionSilently_(record.captionText);
+        window.open("https://www.facebook.com/", "_blank", "noopener");
+        showToast("File terunduh & caption tersalin — tinggal upload lalu tempel (Ctrl+V) captionnya di Facebook. 📋", "info");
+      } catch (err) {
+        console.error("Share ke Facebook gagal:", err);
+        showToast(err.message || "Gagal menyiapkan bagikan ke Facebook.", "error");
+      }
     }
 
     /* ==========================================================
