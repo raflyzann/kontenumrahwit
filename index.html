@@ -233,7 +233,25 @@
         <span id="paketCounter" class="text-xs sm:text-sm text-emerald-700/70 font-medium"></span>
       </div>
 
-      <div id="categoryFilters" class="flex flex-wrap gap-2 mb-5"></div>
+      <div id="categoryFilters" class="flex flex-wrap gap-2 mb-4"></div>
+
+      <div class="relative mb-5">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-700/50 text-sm pointer-events-none"></i>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="🔍 Cari flyer/video atau kata kunci..."
+          class="field-input w-full border border-emerald-900/20 rounded-xl pl-10 pr-9 py-2.5 text-sm text-emerald-950 placeholder:text-emerald-700/50 bg-white transition-shadow duration-150"
+          autocomplete="off"
+        />
+        <button
+          type="button" id="searchClearBtn"
+          class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full text-emerald-700/60 hover:bg-emerald-900/5 hover:text-emerald-900 flex items-center justify-center transition-colors duration-150"
+          aria-label="Hapus pencarian"
+        >
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
 
       <div id="gallerySpinner" class="py-16 text-center text-emerald-700/60">
         <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
@@ -371,6 +389,8 @@
     const sourceBlobCache = new Map();
 
     let currentTab = "paket";
+    let activeCategory = "__all__"; // kategori chip yang sedang aktif (per tab)
+    let searchQuery = "";           // kata kunci pencarian yang sedang aktif (per tab)
     const TAB_LABELS = {
       paket: "Katalog Flyer Paket",
       promosi: "Katalog Flyer Konten",
@@ -491,8 +511,40 @@
       const scoped = getDataForCurrentTab();
       document.getElementById("galleryTitle").textContent = TAB_LABELS[currentTab];
       document.getElementById("emptyStateText").textContent = TAB_EMPTY_TEXT[currentTab];
+
+      // Reset filter kategori & pencarian setiap kali pindah tab (Flyer Paket/Konten/Video)
+      activeCategory = "__all__";
+      searchQuery = "";
+      const searchInput = document.getElementById("searchInput");
+      if (searchInput) searchInput.value = "";
+      const clearBtn = document.getElementById("searchClearBtn");
+      if (clearBtn) clearBtn.classList.add("hidden");
+
       renderCategoryFilters(scoped);
       renderPromoCards(scoped);
+    }
+
+    /* Cek apakah sebuah record cocok dengan kata kunci pencarian
+       (mencari di judul paket, isi caption, & kategori). */
+    function matchesSearchQuery(record, query) {
+      if (!query) return true;
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        (record.titlePaket || "").toLowerCase().includes(q) ||
+        (record.captionText || "").toLowerCase().includes(q) ||
+        (record.kategori || "").toLowerCase().includes(q)
+      );
+    }
+
+    /* Terapkan gabungan filter kategori (chip) + pencarian (search box)
+       terhadap data tab yang sedang aktif, lalu render ulang kartu. */
+    function applyFilters() {
+      const scoped = getDataForCurrentTab();
+      const byCategory =
+        activeCategory === "__all__" ? scoped : scoped.filter((d) => d.kategori === activeCategory);
+      const filtered = byCategory.filter((d) => matchesSearchQuery(d, searchQuery));
+      renderPromoCards(filtered);
     }
 
     function renderCategoryFilters(data) {
@@ -515,15 +567,14 @@
           });
           btn.classList.remove(...idleClasses);
           btn.classList.add(...activeClasses);
-          const scoped = getDataForCurrentTab();
-          const filtered = value === "__all__" ? scoped : scoped.filter((d) => d.kategori === value);
-          renderPromoCards(filtered);
+          activeCategory = value;
+          applyFilters();
         });
         return btn;
       };
 
-      wrap.appendChild(makeChip("Semua", "__all__", true));
-      categories.forEach((cat) => wrap.appendChild(makeChip(cat, cat, false)));
+      wrap.appendChild(makeChip("Semua", "__all__", activeCategory === "__all__"));
+      categories.forEach((cat) => wrap.appendChild(makeChip(cat, cat, activeCategory === cat)));
     }
 
     function renderPromoCards(data) {
@@ -1367,6 +1418,29 @@
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("currentYear").textContent = new Date().getFullYear();
       updateAgentPhoneBadge();
+
+      // === FITUR PENCARIAN (search box) — berlaku di tab Flyer Paket,
+      // Flyer Konten, & Video Konten. Mencari di judul, caption, & kategori.
+      const searchInput = document.getElementById("searchInput");
+      const searchClearBtn = document.getElementById("searchClearBtn");
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          searchQuery = e.target.value;
+          if (searchClearBtn) searchClearBtn.classList.toggle("hidden", searchQuery.length === 0);
+          applyFilters();
+        });
+      }
+      if (searchClearBtn) {
+        searchClearBtn.addEventListener("click", () => {
+          searchQuery = "";
+          if (searchInput) {
+            searchInput.value = "";
+            searchInput.focus();
+          }
+          searchClearBtn.classList.add("hidden");
+          applyFilters();
+        });
+      }
 
       const logoImg = document.getElementById("logoImg");
       if (logoImg) {
