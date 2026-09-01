@@ -40,9 +40,11 @@
     };
   </script>
 
+  <link rel="manifest" href="manifest.json" />
+
   <!-- ========================================================
-       CUSTOM STYLE
-  ========================================================= -->
+        CUSTOM STYLE
+   ========================================================= -->
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FAF8F2; }
     .font-display { font-family: 'Reem Kufi', sans-serif; }
@@ -358,6 +360,10 @@
 
   <div id="toastContainer" class="fixed bottom-6 left-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
 
+  <div id="offlineBanner" class="hidden fixed top-0 left-0 right-0 z-[55] bg-red-700 text-white text-xs sm:text-sm font-semibold text-center py-2 px-4">
+    <i class="fa-solid fa-wifi mr-1.5"></i>Koneksi internet terputus — menunggu koneksi kembali...
+  </div>
+
   <!-- ========================================================
        BAGIAN SCRIPT
   ========================================================= -->
@@ -372,6 +378,25 @@
        dipakai bersama oleh kedua halaman).
     ========================================================== */
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxY_khfSOOAofcxk9yL0MzOuh7FOZ7lRtFwxpYvtA9vNaml__tSfFmy4JQ82e6HfuRrlg/exec";
+
+    /* ==========================================================
+       0.2 DETEKSI OFFLINE/ONLINE
+    ========================================================== */
+    function updateOfflineUI() {
+      const banner = document.getElementById("offlineBanner");
+      if (!banner) return;
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+      banner.classList.toggle("hidden", !offline);
+    }
+
+    window.addEventListener("online", () => {
+      updateOfflineUI();
+      showToast("Koneksi internet sudah kembali. 🟢", "success");
+    });
+    window.addEventListener("offline", () => {
+      updateOfflineUI();
+      showToast("Koneksi internet terputus. Periksa koneksi Anda.", "error");
+    });
 
     /* ==========================================================
        0.1 STATE APLIKASI
@@ -432,38 +457,81 @@
 
     /* ==========================================================
        1. JEMBATAN KE BACKEND (Google Apps Script) — VIA fetch()
-    ========================================================== */
+       ========================================================== */
+    const API_RETRY_MAX = 3;
+    const API_TIMEOUT_MS = 60 * 1000;
+
+    function sleep_(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function fetchWithTimeout_(url, options = {}, timeoutMs = API_TIMEOUT_MS) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        return response;
+      } catch (err) {
+        if (err && err.name === "AbortError") {
+          throw new Error("Permintaan ke server melebihi batas waktu. Periksa koneksi dan coba lagi.");
+        }
+        throw err;
+      } finally {
+        clearTimeout(id);
+      }
+    }
+
     async function runServer(functionName, ...args) {
       if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("GANTI_DENGAN_ID_DEPLOYMENT_ANDA") !== -1) {
         throw new Error("APPS_SCRIPT_URL belum diisi. Tempel URL Web App Google Apps Script Anda di bagian atas <script>.");
       }
 
-      let response;
-      try {
-        response = await fetch(APPS_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: functionName, args: args }),
-        });
-      } catch (networkErr) {
-        throw new Error("Gagal terhubung ke server. Periksa koneksi internet Anda.");
+      const payload = JSON.stringify({ action: functionName, args: args });
+      let lastError = null;
+
+      for (let attempt = 1; attempt <= API_RETRY_MAX; attempt++) {
+        try {
+          const response = await fetchWithTimeout_(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: payload,
+          });
+
+          if (!response.ok) {
+            throw new Error("Server merespons dengan error (HTTP " + response.status + ").");
+          }
+
+          let data;
+          try {
+            data = await response.json();
+          } catch (parseErr) {
+            throw new Error("Respons server tidak valid.");
+          }
+
+          if (!data || data.ok !== true) {
+            throw new Error((data && data.error) || "Terjadi kesalahan pada server.");
+          }
+
+          return data.result;
+        } catch (err) {
+          lastError = err;
+          const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+          const isNetworkErr = err && (err.message === "Failed to fetch" || err.message === "NetworkError when attempting to fetch resource.");
+          const isTimeout = err && /melebihi batas waktu/i.test(err.message || "");
+
+          if (isOffline || isNetworkErr || isTimeout) {
+            if (attempt < API_RETRY_MAX) {
+              const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+              await sleep_(backoffMs);
+              continue;
+            }
+          }
+
+          throw err;
+        }
       }
 
-      if (!response.ok) {
-        throw new Error("Server merespons dengan error (HTTP " + response.status + ").");
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseErr) {
-        throw new Error("Respons server tidak valid.");
-      }
-
-      if (!data || data.ok !== true) {
-        throw new Error((data && data.error) || "Terjadi kesalahan pada server.");
-      }
-      return data.result;
+      throw lastError || new Error("Gagal terhubung ke server setelah beberapa percobaan.");
     }
 
     /* Utilitas: mencegah karakter caption/nama merusak markup saat disisipkan ke innerHTML */
@@ -1448,8 +1516,15 @@
       }
 
       loadGallery();
+      updateOfflineUI();
 
       // === TAMBAHAN BARU ===
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+        });
+      }
+
       // Tampilkan popup "Atur Nomor HP Anda" secara OTOMATIS setiap kali
       // webapp ini dibuka/di-refresh — sama seperti saat tombol "No. HP"
       // di header ditekan manual. Nilai input akan otomatis terisi jika
