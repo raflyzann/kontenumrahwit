@@ -233,7 +233,13 @@
         <span id="paketCounter" class="text-xs sm:text-sm text-emerald-700/70 font-medium"></span>
       </div>
 
-      <div id="categoryFilters" class="flex flex-wrap gap-2 mb-4"></div>
+      <div class="relative mb-4 max-w-xs">
+        <select
+          id="categoryFilters"
+          class="field-input appearance-none w-full border border-emerald-900/20 rounded-xl pl-4 pr-9 py-2.5 text-sm font-semibold text-emerald-900 bg-white transition-shadow duration-150 cursor-pointer"
+        ></select>
+        <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-700/60 text-xs pointer-events-none"></i>
+      </div>
 
       <div class="relative mb-5">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-700/50 text-sm pointer-events-none"></i>
@@ -548,33 +554,30 @@
     }
 
     function renderCategoryFilters(data) {
-      const wrap = document.getElementById("categoryFilters");
+      const select = document.getElementById("categoryFilters");
       const categories = [...new Set(data.map((d) => d.kategori).filter(Boolean))];
-      wrap.innerHTML = "";
+      select.innerHTML = "";
 
-      const activeClasses = ["bg-emerald-800", "text-white", "border-emerald-800"];
-      const idleClasses = ["bg-white", "text-emerald-800", "border-emerald-800/30"];
-
-      const makeChip = (label, value, isActive) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = label;
-        btn.className = `px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold border transition-colors duration-200 ${(isActive ? activeClasses : idleClasses).join(" ")}`;
-        btn.addEventListener("click", () => {
-          wrap.querySelectorAll("button").forEach((b) => {
-            b.classList.remove(...activeClasses);
-            b.classList.add(...idleClasses);
-          });
-          btn.classList.remove(...idleClasses);
-          btn.classList.add(...activeClasses);
-          activeCategory = value;
-          applyFilters();
-        });
-        return btn;
+      const makeOption = (label, value) => {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = label;
+        return opt;
       };
 
-      wrap.appendChild(makeChip("Semua", "__all__", activeCategory === "__all__"));
-      categories.forEach((cat) => wrap.appendChild(makeChip(cat, cat, activeCategory === cat)));
+      select.appendChild(makeOption("Semua Kategori", "__all__"));
+      categories.forEach((cat) => select.appendChild(makeOption(cat, cat)));
+
+      // Kalau kategori aktif sebelumnya sudah tidak ada di tab ini, reset ke "Semua"
+      if (activeCategory !== "__all__" && !categories.includes(activeCategory)) {
+        activeCategory = "__all__";
+      }
+      select.value = activeCategory;
+
+      select.onchange = () => {
+        activeCategory = select.value;
+        applyFilters();
+      };
     }
 
     function renderPromoCards(data) {
@@ -1364,15 +1367,22 @@
           if (!record.fileId) {
             throw new Error("File video tidak ditemukan di Google Drive.");
           }
-          if (navigator.canShare && !navigator.canShare({ url: record.videoViewUrl || "" })) {
-            // Sebagian browser tidak bisa share URL — tetap coba, kalau gagal akan ditangkap di bawah.
+
+          // BARU: ambil file video ASLINYA (bukan link Drive-nya) lewat backend,
+          // sama seperti alur gambar — supaya yang tershare ke WhatsApp/dsb.
+          // adalah videonya langsung, siap diputar, bukan sekadar tautan.
+          const fileData = await runServer("getFileBase64", record.fileId);
+          const blob = base64ToBlob(fileData.base64, fileData.mimeType || "video/mp4");
+          const extension = (fileData.mimeType && fileData.mimeType.split("/")[1]) || "mp4";
+          const fileName = slugifyForFile_(record.titlePaket) + "-video." + extension;
+          const file = new File([blob], fileName, { type: fileData.mimeType || "video/mp4" });
+
+          if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+            throw new Error('Perangkat ini tidak mendukung berbagi file video langsung. Silakan gunakan tombol "Download", lalu bagikan videonya secara manual.');
           }
-          await navigator.share({
-            title: record.titlePaket,
-            text: record.captionText || "",
-            url: record.videoViewUrl || undefined,
-          });
-          showToast("Berhasil dibagikan! 📤", "success");
+
+          await navigator.share({ files: [file], title: record.titlePaket, text: record.captionText || "" });
+          showToast("Video berhasil dibagikan! 📤", "success");
           return;
         }
 
@@ -1401,7 +1411,8 @@
           if (record.mediaType !== "video") {
             getSourceBlob_(record).catch(() => {});
           }
-          showToast("Gambar sedang disiapkan — tekan tombol Bagikan sekali lagi ya (biasanya langsung berhasil). 🔄", "info");
+          const mediaLabel = record.mediaType === "video" ? "Video" : "Gambar";
+          showToast(`${mediaLabel} sedang disiapkan — tekan tombol Bagikan sekali lagi ya (biasanya langsung berhasil). 🔄`, "info");
           return;
         }
 
