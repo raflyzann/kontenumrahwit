@@ -660,7 +660,7 @@
 
         card.querySelector('[data-action="download"]').addEventListener("click", (e) => downloadFlyer(record, e.currentTarget));
         card.querySelector('[data-action="copy"]').addEventListener("click", (e) => copyCaption(record.captionText, e.currentTarget));
-        card.querySelector('[data-action="share"]').addEventListener("click", () => shareViaNativeSheet(record));
+        card.querySelector('[data-action="share"]').addEventListener("click", (e) => shareViaNativeSheet(record, e.currentTarget));
 
         container.appendChild(card);
       });
@@ -1228,7 +1228,7 @@
       }
 
       downloadBtn.onclick = () => downloadFlyer(record, downloadBtn);
-      shareBtn.onclick = () => shareViaNativeSheet(record);
+      shareBtn.onclick = () => shareViaNativeSheet(record, shareBtn);
 
       modal.classList.remove("hidden");
       document.body.style.overflow = "hidden";
@@ -1357,7 +1357,24 @@
       return (str || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "file";
     }
 
-    async function shareViaNativeSheet(record) {
+    async function shareViaNativeSheet(record, buttonEl) {
+      // BARU: tampilkan loading spinner pada tombol Bagikan yang diklik,
+      // supaya pengguna tahu prosesnya sedang berjalan (terutama untuk
+      // video, yang butuh waktu lebih lama untuk disiapkan). Kembali ke
+      // tampilan semula lewat blok finally, apa pun hasilnya (berhasil,
+      // dibatalkan, gagal, atau perlu tap ulang).
+      const originalButtonContent = buttonEl ? buttonEl.innerHTML : null;
+      if (buttonEl) {
+        buttonEl.disabled = true;
+        // Ganti hanya ikonnya jadi spinner (label teks seperti "Bagikan"
+        // di tombol lightbox tetap dipertahankan, supaya lebar tombol
+        // tidak berubah-ubah).
+        buttonEl.innerHTML = buttonEl.innerHTML.replace(
+          /<i class="[^"]*"><\/i>/,
+          '<i class="fa-solid fa-spinner fa-spin"></i>'
+        );
+      }
+
       try {
         if (typeof navigator.share !== "function") {
           throw new Error('Bagikan otomatis tidak didukung di perangkat/browser ini. Silakan gunakan tombol "Download", lalu bagikan filenya secara manual.');
@@ -1368,14 +1385,20 @@
             throw new Error("File video tidak ditemukan di Google Drive.");
           }
 
-          // BARU: ambil file video ASLINYA (bukan link Drive-nya) lewat backend,
-          // sama seperti alur gambar — supaya yang tershare ke WhatsApp/dsb.
-          // adalah videonya langsung, siap diputar, bukan sekadar tautan.
-          const fileData = await runServer("getFileBase64", record.fileId);
-          const blob = base64ToBlob(fileData.base64, fileData.mimeType || "video/mp4");
-          const extension = (fileData.mimeType && fileData.mimeType.split("/")[1]) || "mp4";
+          // BARU: ambil file video ASLINYA (bukan link Drive-nya) lewat
+          // getSourceBlob_ (memakai cache, sama seperti alur gambar) —
+          // supaya yang tershare ke WhatsApp/dsb. adalah videonya langsung.
+          // PENTING dipakai lewat cache: mengambil video dari server makan
+          // waktu, dan navigator.share() HARUS dipanggil masih dalam
+          // konteks sentuhan pengguna (user gesture) — kalau menunggu fetch
+          // dari nol setiap klik, gesture-nya keburu kadaluarsa dan share
+          // akan selalu gagal (NotAllowedError). Dengan cache, begitu
+          // percobaan pertama gagal & memanaskan cache, percobaan
+          // berikutnya jauh lebih cepat sehingga bisa berhasil.
+          const blob = await getSourceBlob_(record);
+          const extension = (blob.type && blob.type.split("/")[1]) || "mp4";
           const fileName = slugifyForFile_(record.titlePaket) + "-video." + extension;
-          const file = new File([blob], fileName, { type: fileData.mimeType || "video/mp4" });
+          const file = new File([blob], fileName, { type: blob.type || "video/mp4" });
 
           if (navigator.canShare && !navigator.canShare({ files: [file] })) {
             throw new Error('Perangkat ini tidak mendukung berbagi file video langsung. Silakan gunakan tombol "Download", lalu bagikan videonya secara manual.');
@@ -1408,9 +1431,7 @@
         // sudah dipanaskan (untuk record ini) supaya tap berikutnya jauh lebih
         // cepat/instan, lalu beri pesan yang jelas ke pengguna.
         if (err && (err.name === "NotAllowedError" || /user gesture/i.test(err.message || ""))) {
-          if (record.mediaType !== "video") {
-            getSourceBlob_(record).catch(() => {});
-          }
+          getSourceBlob_(record).catch(() => {});
           const mediaLabel = record.mediaType === "video" ? "Video" : "Gambar";
           showToast(`${mediaLabel} sedang disiapkan — tekan tombol Bagikan sekali lagi ya (biasanya langsung berhasil). 🔄`, "info");
           return;
@@ -1420,6 +1441,11 @@
           (err && err.message) || "Gagal membuka menu bagikan. Silakan coba lagi.",
           "error"
         );
+      } finally {
+        if (buttonEl && originalButtonContent !== null) {
+          buttonEl.disabled = false;
+          buttonEl.innerHTML = originalButtonContent;
+        }
       }
     }
 
